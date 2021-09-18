@@ -117,7 +117,7 @@ def load_data():
     x = iris['data']
     y = iris['target']
     x = x[y != 2]
-    x = x[:, :2]
+    x = x[:, 2:]
     y = y[y != 2]
     y[y == 0] = -1
     return x,y
