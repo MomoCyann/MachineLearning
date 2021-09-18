@@ -20,9 +20,8 @@ def load_data():
     y = iris['target']
     x = x[y!=2]
     y = y[y!=2]
-    # 取前两列数据 只分类0或1类鸢尾花 1和2类鸢尾花是线性不可分的。
-    # 似乎后两列数据没用，这里没做可视化预处理，一开始训练效果奇差
-    x = x[:,:2]
+    # 选择哪些数据
+    x = x[:,]
     # 给x第一列加一列1，常数项
     x_one = np.ones([len(x)])
     x = np.insert(x,0,values=x_one,axis=1)
@@ -53,7 +52,7 @@ def cal_loss():
     return sum * (-1) / len(hx)
 
 
-def  gradiant_descent(theta):
+def gradiant_descent(theta):
     desent_theta = np.zeros([len(theta)])
     for i in range(len(hx)):
         for j in range(len(theta)):
