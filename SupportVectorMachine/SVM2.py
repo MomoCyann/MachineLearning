@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn import datasets
+import matplotlib.pyplot as plt
 
 
 class SVM:
@@ -10,7 +11,7 @@ class SVM:
         self.m = self.X.shape[0]
         self.a = np.zeros(self.m)
         self.b = 0
-        self.w = 0
+        self.w = np.zeros(len(X[0]))
 
         self.g = 100 # 迭代次数
         self.C = 10 # 惩罚系数
@@ -63,7 +64,7 @@ class SVM:
         g_now = 0
         while g_now < self.g:
             g_now += 1
-            for i in range(0, self.m):
+            for i in range(self.m):
                 a1 = self.a[i]
                 self.E[i] = self.fx(self.X[i]) - self.Y[i]
                 y1 = self.Y[i]
@@ -108,8 +109,12 @@ class SVM:
                     b2 = -self.E[j] - y2 * k12 * (a1_new - a1) - y2 * k22 * (a2_new - a2) + self.b
                     self.b = (b1 + b2) / 2
 
-    # def import_w(self,X):
-    #     self.w =
+    def draw_line(self):
+        for i in range(self.m):
+            self.w += self.a[i] * self.Y[i] * self.X[i]
+        x0 = np.linspace(1, 3, 200)
+        decision_boundary = - self.w[0] / self.w[1] * x0 - self.b / self.w[1]
+        plt.plot(x0, decision_boundary, "k", linewidth=2)
 
 def load_data():
     # 鸢尾花
@@ -122,6 +127,10 @@ def load_data():
     y[y == 0] = -1
     return x,y
 
+def plot_data(X, Y):
+    plt.scatter(X[:, 0], X[:, 1], c=np.squeeze(Y), cmap=plt.cm.Spectral)
+    plt.show()
+
 def main():
     X, Y = load_data()
     model = SVM(X, Y)
@@ -130,11 +139,12 @@ def main():
     y_pred = model.predict(X)
     correct = (y_pred == Y).astype('float')
     correct = correct.sum() / correct.shape[0]
-    print(correct)
+    print("the percent of correct: "+str(correct))
+    model.draw_line()
+    plot_data(X, Y)
 
 
 if __name__ == "__main__":
     main()
-    print("complete")
 
 
