@@ -109,7 +109,7 @@ class SVM:
                     b2 = -self.E[j] - y2 * k12 * (a1_new - a1) - y2 * k22 * (a2_new - a2) + self.b
                     self.b = (b1 + b2) / 2
 
-    def draw_line(self):
+    def draw_dec_bud(self):
         for i in range(self.m):
             self.w += self.a[i] * self.Y[i] * self.X[i]
         x0 = np.linspace(1, 3, 200)
@@ -127,7 +127,7 @@ def load_data():
     y[y == 0] = -1
     return x,y
 
-def plot_data(X, Y):
+def draw_data(X, Y):
     plt.scatter(X[:, 0], X[:, 1], c=np.squeeze(Y), cmap=plt.cm.Spectral)
     plt.show()
 
@@ -140,8 +140,9 @@ def main():
     correct = (y_pred == Y).astype('float')
     correct = correct.sum() / correct.shape[0]
     print("the percent of correct: "+str(correct))
-    model.draw_line()
-    plot_data(X, Y)
+
+    model.draw_dec_bud()
+    draw_data(X, Y)
 
 
 if __name__ == "__main__":
