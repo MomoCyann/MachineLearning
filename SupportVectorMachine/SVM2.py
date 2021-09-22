@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn import datasets
 import matplotlib.pyplot as plt
-
+from sklearn.datasets import make_moons
 
 class SVM:
 
@@ -131,7 +131,7 @@ def draw_data(X, Y):
     plt.scatter(X[:, 0], X[:, 1], c=np.squeeze(Y), cmap=plt.cm.Spectral)
     plt.show()
 
-def main():
+if __name__ == "__main__":
     X, Y = load_data()
     model = SVM(X, Y)
     model.smo()
@@ -144,8 +144,5 @@ def main():
     model.draw_dec_bud()
     draw_data(X, Y)
 
-
-if __name__ == "__main__":
-    main()
 
 

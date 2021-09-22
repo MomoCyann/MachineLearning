@@ -16,10 +16,11 @@ class SVM:
         self.g = 100 # 迭代次数
         self.C = 10 # 惩罚系数
         self.ep = 1e-3 # 精准度
-        self.sigma = 10 # sigma越小，图像越陡峭，超平面越细致， sigma越大 超平面越平滑
+        self.sigma = 5 # sigma越小，图像越陡峭，超平面越细致， sigma越大 超平面越平滑
         # sigma = 1 准确率78
         # sigma = 2 准确率80
         # sigma = 5 准确率82
+        self.matrix = self.cal_kernel_matrix()
         self.E = np.zeros(self.m) # 预测值与真实值之差
 
     def choose_a(self, i, m):
@@ -42,27 +43,20 @@ class SVM:
         '''
         res = 0
         for i in range(self.m):
-           res += self.a[i] * self.Y[i] * self.kernel_rbf(self.X[i], xi)
+           res += self.a[i] * self.Y[i] * self.matrix[i][xi]
         res += self.b
         return res
 
-    def predict(self, xi):
+    def predict(self, X):
         '''
         预测分类
         :param xi:
         :return:
         '''
-        res = self.fx(xi)
+        res = np.zeros(len(X))
+        for i in range(len(X)):
+            res[i] = self.fx(i)
         return np.sign(res)
-
-    def kernel(self, x1, x2):
-        '''
-        计算内积
-        :param x1:
-        :param x2:
-        :return:
-        '''
-        return np.dot(x1, x2.T)
 
     def kernel_rbf(self, x1, x2):
         '''
@@ -71,7 +65,19 @@ class SVM:
         :param x2:
         :return:
         '''
-        return np.exp(-1 * np.dot((x1 - x2).T, x1 - x2) / (2 * np.square(self.sigma)))
+        return np.exp(-1 * np.dot(x1 - x2, x1 - x2) / (2 * np.square(self.sigma)))
+
+    def cal_kernel_matrix(self):
+        matrix = [[0 for i in range(self.m)] for j in range(self.m)]
+        for i in range(self.m):
+            x1 = self.X[i]
+            for j in range(i, self.m):
+                x2 = self.X[j]
+                k = np.exp(-1 * np.dot(x1 - x2, x1 - x2) / (2 * np.square(self.sigma)))
+                matrix[i][j] = k
+                matrix[j][i] = k
+        matrix = np.array(matrix)
+        return matrix
 
     def smo(self):
         g_now = 0
@@ -79,7 +85,7 @@ class SVM:
             g_now += 1
             for i in range(self.m):
                 a1 = self.a[i]
-                self.E[i] = self.fx(self.X[i]) - self.Y[i]
+                self.E[i] = self.fx(i) - self.Y[i]
                 y1 = self.Y[i]
 
                 if (self.E[i] * y1 > self.ep and a1 > self.ep) or (self.E[i] * y1 < 0 and a1 < self.C):
@@ -88,7 +94,7 @@ class SVM:
                     step = self.E[i] - self.E
                     j = np.argmax(step)
                     a2 = self.a[j]
-                    self.E[j] = self.fx(self.X[j]) - self.Y[j]
+                    self.E[j] = self.fx(j) - self.Y[j]
 
                     #计算上下界
                     y1 = self.Y[i]
