@@ -28,47 +28,52 @@ def load_data():
     x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=0.25,random_state=0)
     return x_train,x_test,y_train,y_test
 
+class LogisticRegression:
 
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+    def __init__(self):
+        self.X_train = X_train
+        self.y_train = y_train
 
-
-def cal_hx_y():
-    hx.clear()
-    y.clear()
-    for i in range(len(y_train)):
-        hx.append(sigmoid(np.dot(theta,x_train[i])))
-        if hx[i] >= 0.5:
-            y.append(1)
-        else:
-            y.append(0)
-    return hx,y
+    def sigmoid(x):
+        return 1 / (1 + np.exp(-x))
 
 
-def cal_loss():
-    sum = 0
-    for i in range(len(hx)):
-        sum += y_train[i] * np.log(hx[i]) + (1-y_train[i]) * np.log(1-hx[i])
-    return sum * (-1) / len(hx)
+    def cal_hx_y():
+        hx.clear()
+        y.clear()
+        for i in range(len(y_train)):
+            hx.append(sigmoid(np.dot(theta,x_train[i])))
+            if hx[i] >= 0.5:
+                y.append(1)
+            else:
+                y.append(0)
+        return hx,y
 
 
-def gradiant_descent(theta):
-    desent_theta = np.zeros([len(theta)])
-    for i in range(len(hx)):
-        for j in range(len(theta)):
-            desent_theta[j] += x_train[i,j] * (hx[i]-y_train[i]) / len(hx)
-    theta = theta - desent_theta * alpha
-    return theta
+    def cal_loss():
+        sum = 0
+        for i in range(len(hx)):
+            sum += y_train[i] * np.log(hx[i]) + (1-y_train[i]) * np.log(1-hx[i])
+        return sum * (-1) / len(hx)
 
 
-def predict():
-    y_pred = np.empty([len(y_test)])
-    for i in range(len(y_test)):
-        if sigmoid(np.dot(theta,x_test[i])) >= 0.5:
-            y_pred[i] = 1
-        else:
-            y_pred[i] = 0
-    return y_pred
+    def gradiant_descent(theta):
+        desent_theta = np.zeros([len(theta)])
+        for i in range(len(hx)):
+            for j in range(len(theta)):
+                desent_theta[j] += x_train[i,j] * (hx[i]-y_train[i]) / len(hx)
+        theta = theta - desent_theta * alpha
+        return theta
+
+
+    def predict():
+        y_pred = np.empty([len(y_test)])
+        for i in range(len(y_test)):
+            if sigmoid(np.dot(theta,x_test[i])) >= 0.5:
+                y_pred[i] = 1
+            else:
+                y_pred[i] = 0
+        return y_pred
 
 def cal_accuracy():
     count = 0

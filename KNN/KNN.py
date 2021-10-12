@@ -1,6 +1,10 @@
 import numpy as np
 from math import sqrt
 from collections import Counter
+from KFOLD.KFOLD import KFOLD
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_iris
+import matplotlib.pyplot as plt
 
 class KNN:
 
@@ -34,16 +38,24 @@ class KNN:
 
 
 if __name__ == '__main__':
-    X_train = np.array([[0, 0],
-                        [1, 1],
-                        [2, 2],
-                        [10, 10],
-                        [11, 11],
-                        [12, 12]])
-    y_train = np.array([0, 0, 0, 1, 1, 1])
-    x = np.array([[13,13],[-1,-1]])
+    # load datasets
+    iris = load_iris()
+    data = iris.data[:, :2]
+    target = iris.target
+    X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.2, random_state=1)
 
+    #cross validation
+    k_choices = range(1,31)
+    kf = KFOLD(X_train, y_train, 10)
+    scores = []
+    for k in k_choices:
+        clf = KNN(k)
+        clf.fit(X_train, y_train)
+        print('when k is ',k)
+        scores.append(kf.cross_validation(clf))
+    print(scores)
 
-    knn_clf = KNN(2)
-    knn_clf.fit(X_train, y_train)
-    print(knn_clf.predict(x))
+    plt.plot(k_choices, scores)
+    plt.xlabel('K')
+    plt.ylabel('Accuracy')		#通过图像选择最好的参数
+    plt.show()

@@ -48,8 +48,8 @@ class SVM:
         :param xi:
         :return:
         '''
-        res = self.fx(xi)
-        return np.sign(res)
+        result = self.fx(xi)
+        return np.sign(result)
 
     def kernel(self, x1, x2):
         '''
