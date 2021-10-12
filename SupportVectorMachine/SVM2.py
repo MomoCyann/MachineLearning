@@ -1,22 +1,23 @@
 import numpy as np
 from sklearn import datasets
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_moons
+from KFOLD.KFOLD import KFOLD
+from sklearn.model_selection import train_test_split
 
 class SVM:
 
-    def __init__(self, X, Y):
-        self.X = X
-        self.Y = Y
-        self.m = self.X.shape[0]
-        self.a = np.zeros(self.m)
+    def __init__(self):
+        self.X = None
+        self.Y = None
+        self.m = None
+        self.a = None
         self.b = 0
-        self.w = np.zeros(len(X[0]))
+        self.w = None
 
         self.g = 100 # 迭代次数
         self.C = 10 # 惩罚系数
         self.ep = 1e-3 # 精准度
-        self.E = np.zeros(self.m) # 预测值与真实值之差
+        self.E = None # 预测值与真实值之差
 
     def choose_a(self, i, m):
         '''
@@ -60,7 +61,24 @@ class SVM:
         '''
         return np.dot(x1, x2.T)
 
-    def smo(self):
+    def accuracy(self, X_test, y_test):
+        self.y_pred = self.predict(X_test)
+        count = 0
+        for i in range(len(y_test)):
+            if y_test[i] == self.y_pred[i]:
+                count+=1
+            else:
+                continue
+        return count/len(y_test)
+
+    def fit(self, X_train, y_train):
+        #SMO算法
+        self.X = X_train
+        self.Y = y_train
+        self.m = self.X.shape[0]
+        self.a = np.zeros(self.m)
+        self.w = np.zeros(len(self.X[0]))
+        self.E = np.zeros(self.m)
         g_now = 0
         while g_now < self.g:
             g_now += 1
@@ -125,24 +143,29 @@ def load_data():
     x = x[:, 2:]
     y = y[y != 2]
     y[y == 0] = -1
-    return x,y
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+    return x_train, x_test, y_train, y_test
 
 def draw_data(X, Y):
     plt.scatter(X[:, 0], X[:, 1], c=np.squeeze(Y), cmap=plt.cm.Spectral)
     plt.show()
 
 if __name__ == "__main__":
-    X, Y = load_data()
-    model = SVM(X, Y)
-    model.smo()
+    X_train,X_test,y_train,y_test = load_data()
+    classfier = SVM()
+    classfier.fit(X_train, y_train)
+    accuracy = classfier.accuracy(X_test, y_test)
+    print(accuracy)
 
-    y_pred = model.predict(X)
-    correct = (y_pred == Y).astype('float')
-    correct = correct.sum() / correct.shape[0]
-    print("the percent of correct: "+str(correct))
+    # draw
+    classfier.draw_dec_bud()
+    draw_data(X_train, y_train)
 
-    model.draw_dec_bud()
-    draw_data(X, Y)
+    # cross validation
+    kf = KFOLD(X_train, y_train, 10)
+    clf = SVM()
+    score =  kf.cross_validation(clf)
+    print(score)
 
 
 

@@ -33,8 +33,15 @@ class KNN:
         votes = Counter(topK_y)
         return votes.most_common(1)[0][0]
 
-    def __repr__(self):
-        return "KNN(k=%d)" % self.k
+    def accuracy(self, X_test, y_test):
+        self.y_pred = self.predict(X_test)
+        count = 0
+        for i in range(len(y_test)):
+            if y_test[i] == self.y_pred[i]:
+                count += 1
+            else:
+                continue
+        return count / len(y_test)
 
 
 if __name__ == '__main__':
@@ -50,12 +57,18 @@ if __name__ == '__main__':
     scores = []
     for k in k_choices:
         clf = KNN(k)
-        clf.fit(X_train, y_train)
         print('when k is ',k)
         scores.append(kf.cross_validation(clf))
-    print(scores)
 
     plt.plot(k_choices, scores)
     plt.xlabel('K')
     plt.ylabel('Accuracy')		#通过图像选择最好的参数
     plt.show()
+
+    # we chose the best one
+    best_k = 25
+    classify = KNN(best_k)
+    classify.fit(X_train,y_train)
+    accuracy = classify.accuracy(X_test, y_test)
+    print('test accuracy is %f' %(accuracy))
+

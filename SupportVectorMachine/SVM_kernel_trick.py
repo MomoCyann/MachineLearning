@@ -1,27 +1,28 @@
 import numpy as np
-from sklearn.datasets import make_moons
+from sklearn import datasets
 import matplotlib.pyplot as plt
-
+from KFOLD.KFOLD import KFOLD
+from sklearn.model_selection import train_test_split
 
 class SVM:
 
-    def __init__(self, X, Y):
-        self.X = X
-        self.Y = Y
-        self.m = self.X.shape[0]
-        self.a = np.zeros(self.m)
+    def __init__(self):
+        self.X = None
+        self.Y = None
+        self.m = None
+        self.a = None
         self.b = 0
-        self.w = np.zeros(len(X[0]))
+        self.w = None
 
         self.g = 100 # 迭代次数
         self.C = 10 # 惩罚系数
         self.ep = 1e-3 # 精准度
-        self.sigma = 5 # sigma越小，图像越陡峭，超平面越细致， sigma越大 超平面越平滑
+        self.E = None # 预测值与真实值之差
+        self.sigma = 5  # sigma越小，图像越陡峭，超平面越细致， sigma越大 超平面越平滑
         # sigma = 1 准确率78
         # sigma = 2 准确率80
         # sigma = 5 准确率82
         self.matrix = self.cal_kernel_matrix()
-        self.E = np.zeros(self.m) # 预测值与真实值之差
 
     def choose_a(self, i, m):
         '''
@@ -43,20 +44,27 @@ class SVM:
         '''
         res = 0
         for i in range(self.m):
-           res += self.a[i] * self.Y[i] * self.matrix[i][xi]
+           res += self.a[i] * self.Y[i] * self.kernel(self.X[i], xi)
         res += self.b
         return res
 
-    def predict(self, X):
+    def predict(self, xi):
         '''
         预测分类
         :param xi:
         :return:
         '''
-        res = np.zeros(len(X))
-        for i in range(len(X)):
-            res[i] = self.fx(i)
-        return np.sign(res)
+        result = self.fx(xi)
+        return np.sign(result)
+
+    def kernel(self, x1, x2):
+        '''
+        计算内积
+        :param x1:
+        :param x2:
+        :return:
+        '''
+        return np.dot(x1, x2.T)
 
     def kernel_rbf(self, x1, x2):
         '''
@@ -79,13 +87,30 @@ class SVM:
         matrix = np.array(matrix)
         return matrix
 
-    def smo(self):
+    def accuracy(self, X_test, y_test):
+        self.y_pred = self.predict(X_test)
+        count = 0
+        for i in range(len(y_test)):
+            if y_test[i] == self.y_pred[i]:
+                count+=1
+            else:
+                continue
+        return count/len(y_test)
+
+    def fit(self, X_train, y_train):
+        #SMO算法
+        self.X = X_train
+        self.Y = y_train
+        self.m = self.X.shape[0]
+        self.a = np.zeros(self.m)
+        self.w = np.zeros(len(self.X[0]))
+        self.E = np.zeros(self.m)
         g_now = 0
         while g_now < self.g:
             g_now += 1
             for i in range(self.m):
                 a1 = self.a[i]
-                self.E[i] = self.fx(i) - self.Y[i]
+                self.E[i] = self.fx(self.X[i]) - self.Y[i]
                 y1 = self.Y[i]
 
                 if (self.E[i] * y1 > self.ep and a1 > self.ep) or (self.E[i] * y1 < 0 and a1 < self.C):
@@ -94,7 +119,7 @@ class SVM:
                     step = self.E[i] - self.E
                     j = np.argmax(step)
                     a2 = self.a[j]
-                    self.E[j] = self.fx(j) - self.Y[j]
+                    self.E[j] = self.fx(self.X[j]) - self.Y[j]
 
                     #计算上下界
                     y1 = self.Y[i]
@@ -131,11 +156,23 @@ class SVM:
     def draw_dec_bud(self):
         for i in range(self.m):
             self.w += self.a[i] * self.Y[i] * self.X[i]
-        x0 = np.linspace(-2, 2, 200)
+        x0 = np.linspace(1, 3, 200)
         decision_boundary = - self.w[0] / self.w[1] * x0 - self.b / self.w[1]
         plt.plot(x0, decision_boundary, "k", linewidth=2)
 
 def load_data():
+    # 鸢尾花
+    iris = datasets.load_iris()
+    x = iris['data']
+    y = iris['target']
+    x = x[y != 2]
+    x = x[:, 2:]
+    y = y[y != 2]
+    y[y == 0] = -1
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+    return x_train, x_test, y_train, y_test
+
+def load_data_moon():
     # 月亮数据集
     X, Y = make_moons(n_samples = 100, noise = 0.15, random_state=0)
     Y[Y == 0] = -1
@@ -145,22 +182,22 @@ def draw_data(X, Y):
     plt.scatter(X[:, 0], X[:, 1], c=np.squeeze(Y), cmap=plt.cm.Spectral)
     plt.show()
 
-def main():
-    X, Y = load_data()
-    model = SVM(X, Y)
-    model.smo()
-
-    y_pred = model.predict(X)
-
-    correct = np.array([y_pred == Y])
-    correct = correct.sum() / correct.shape[0]
-    print("the percent of correct: "+str(correct))
-
-    model.draw_dec_bud()
-    draw_data(X, Y)
-
-
 if __name__ == "__main__":
-    main()
+    X_train,X_test,y_train,y_test = load_data()
+    classfier = SVM()
+    classfier.fit(X_train, y_train)
+    accuracy = classfier.accuracy(X_test, y_test)
+    print(accuracy)
+
+    # draw
+    classfier.draw_dec_bud()
+    draw_data(X_train, y_train)
+
+    # cross validation
+    kf = KFOLD(X_train, y_train, 10)
+    clf = SVM()
+    score =  kf.cross_validation(clf)
+    print(score)
+
 
 
