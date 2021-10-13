@@ -1,25 +1,31 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
+from KFOLD.KFOLD import KFOLD
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_iris
+import matplotlib.pyplot as plt
 
 class KMeans:
 
-    def __init__(self, X):
-        self.X = X
-        self.k = 3
+    def __init__(self, k):
+        self.X = None
+        self.k = k
 
         self.g = 300 # 迭代次数
         self.tol =  0.0001 # 误差范围
         self.centers = {}
         self.types ={}
 
-    def train(self):
+    def fit(self, X):
+        self.X = X
         # generate the centers
         for i in range(self.k):
             self.centers[i] = self.X[i]
 
         for i in range(self.g):
             self.types = {}
+            #每个中心  对应 储存多个点
             for j in range(self.k):
                 self.types[j] = []
             for item in self.X:
@@ -47,13 +53,28 @@ class KMeans:
             if thebest:
                 break
 
-    def predict(self, x):
-        for center in self.centers:
-            dis = [np.linalg.norm(x - self.centers[center])]
-        type = dis.index(min(dis))
-        return type
+    def predict(self, X_test):
+        y_pred = []
+        for item in X_test:
+            dis = []
+            for center in self.centers:
+                dis.append([np.linalg.norm(item - self.centers[center])])
+            type = dis.index(min(dis))
+            y_pred.append(type)
+        return y_pred
 
-    def draw(self):
+#acc有错，聚类还没想好怎么把标签对应
+    def accuracy(self, X_test, y_test):
+        self.y_pred = self.predict(X_test)
+        count = 0
+        for i in range(len(y_test)):
+            if y_test[i] == self.y_pred[i]:
+                count += 1
+            else:
+                continue
+        return count / len(y_test)
+
+    def get_plot(self):
         for center in self.centers:
             plt.scatter(self.centers[center][0], self.centers[center][1], marker='*', s=150)
 
@@ -69,19 +90,20 @@ class KMeans:
 
 
 def load_data():
-    # 鸢尾花
-    iris = datasets.load_iris()
-    x = iris['data']
-    y = iris['target']
-    x = x[:, :2]
-    return x, y
+# load datasets
+    iris = load_iris()
+    data = iris.data
+    target = iris.target
+    X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.2, random_state=1)
+    return X_train, X_test, y_train, y_test
 
 
 if __name__ == '__main__':
-    X, Y = load_data()
-    model = KMeans(X)
-    model.train()
-    model.draw()
+    X_train, X_test, y_train, y_test = load_data()
+    clf = KMeans(3)
+    clf.fit(X_train)
+    clf.get_plot()
+    # print(clf.accuracy(X_test, y_test))
 
 
 

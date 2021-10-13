@@ -88,7 +88,7 @@ class EVENT:
         duraa = self.cal_timeduration(t1,t2)
         v1 = spdobj[i-1]
         v2 = spdobj[i]
-        return (v2-v1) / duraa
+        return ((v2-v1)/3.6) /duraa
 
 
     def cal_timeduration(self, start, end):

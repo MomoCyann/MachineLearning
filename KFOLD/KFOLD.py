@@ -12,8 +12,8 @@ class KFOLD:
 
 
     def cross_validation(self,clf):
-        X_folds = np.vsplit(self.X, self.folds)
-        y_folds = np.hsplit(self.y, self.folds)
+        X_folds = np.array_split(self.X, self.folds, axis=0)
+        y_folds = np.array_split(self.y, self.folds, axis=0)
         self.acc = []
         # split the train sets and validation sets
         for i in range(self.folds):

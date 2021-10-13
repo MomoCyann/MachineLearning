@@ -3,8 +3,9 @@ from math import sqrt
 from collections import Counter
 from KFOLD.KFOLD import KFOLD
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, load_breast_cancer
 import matplotlib.pyplot as plt
+import load_data
 
 class KNN:
 
@@ -34,26 +35,24 @@ class KNN:
         return votes.most_common(1)[0][0]
 
     def accuracy(self, X_test, y_test):
-        self.y_pred = self.predict(X_test)
+        y_pred = self.predict(X_test)
         count = 0
         for i in range(len(y_test)):
-            if y_test[i] == self.y_pred[i]:
+            if y_test[i] == y_pred[i]:
                 count += 1
             else:
                 continue
         return count / len(y_test)
 
 
+
 if __name__ == '__main__':
     # load datasets
-    iris = load_iris()
-    data = iris.data[:, :2]
-    target = iris.target
-    X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.2, random_state=1)
-
+    X, y = load_data.load_data_breast_cancer()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
     #cross validation
     k_choices = range(1,31)
-    kf = KFOLD(X_train, y_train, 10)
+    kf = KFOLD(X, y, 10)
     scores = []
     for k in k_choices:
         clf = KNN(k)
