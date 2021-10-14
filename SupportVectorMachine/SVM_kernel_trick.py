@@ -3,6 +3,7 @@ from sklearn import datasets
 import matplotlib.pyplot as plt
 from KFOLD.KFOLD import KFOLD
 from sklearn.model_selection import train_test_split
+import load_data
 
 class SVM:
 
@@ -22,7 +23,7 @@ class SVM:
         # sigma = 1 准确率78
         # sigma = 2 准确率80
         # sigma = 5 准确率82
-        self.matrix = self.cal_kernel_matrix()
+        self.matrix = None
 
     def choose_a(self, i, m):
         '''
@@ -105,6 +106,7 @@ class SVM:
         self.a = np.zeros(self.m)
         self.w = np.zeros(len(self.X[0]))
         self.E = np.zeros(self.m)
+        self.matrix = self.cal_kernel_matrix()
         g_now = 0
         while g_now < self.g:
             g_now += 1
@@ -160,7 +162,7 @@ class SVM:
         decision_boundary = - self.w[0] / self.w[1] * x0 - self.b / self.w[1]
         plt.plot(x0, decision_boundary, "k", linewidth=2)
 
-def load_data():
+def load_ddata():
     # 鸢尾花
     iris = datasets.load_iris()
     x = iris['data']
@@ -172,22 +174,19 @@ def load_data():
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
     return x_train, x_test, y_train, y_test
 
-def load_data_moon():
-    # 月亮数据集
-    X, Y = make_moons(n_samples = 100, noise = 0.15, random_state=0)
-    Y[Y == 0] = -1
-    return X, Y
 
 def draw_data(X, Y):
     plt.scatter(X[:, 0], X[:, 1], c=np.squeeze(Y), cmap=plt.cm.Spectral)
     plt.show()
 
 if __name__ == "__main__":
-    X_train,X_test,y_train,y_test = load_data()
+    X, y=load_data.breast_cancer()
+    y[y == 0] = -1
+    X_train,X_test,y_train,y_test = train_test_split(X, y, test_size=0.2, random_state=1)
     classfier = SVM()
     classfier.fit(X_train, y_train)
     accuracy = classfier.accuracy(X_test, y_test)
-    print(accuracy)
+    print('test accuracy is ',accuracy)
 
     # draw
     classfier.draw_dec_bud()

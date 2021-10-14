@@ -82,19 +82,19 @@ def load_data_breastcancer():
 
 def load_data_iris():
 # load datasets
-    iris = load_iris()
+    iris = load_breast_cancer()
     data = iris.data[:,]
     target = iris.target
     X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.2, random_state=1)
     return X_train, X_test, y_train, y_test
 
 if __name__ == '__main__':
-    X, y = load_data.iris()
+    X, y = load_data.breast_cancer()
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
     classfier = BAYES()
     classfier.fit(X_train, y_train)
     acc = classfier.accuracy(X_test, y_test)
-    print("Accuracy is %.3f" % acc)
+    print("TEST:Accuracy is %.3f" % acc)
 
     # cross validation
     kf = KFOLD(X, y, 10)

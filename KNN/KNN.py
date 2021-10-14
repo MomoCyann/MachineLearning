@@ -48,8 +48,9 @@ class KNN:
 
 if __name__ == '__main__':
     # load datasets
-    X, y = load_data.load_data_breast_cancer()
+    X, y = load_data.make_moons()
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+
     #cross validation
     k_choices = range(1,31)
     kf = KFOLD(X, y, 10)

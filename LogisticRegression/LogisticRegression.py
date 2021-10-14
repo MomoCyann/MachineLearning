@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
 from KFOLD.KFOLD import KFOLD
+import load_data
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #很重要的一点：！！！！
@@ -94,7 +95,7 @@ class LogisticRegression:
         return count/len(y_test)
 
 # 鸢尾花
-def load_data():
+def load_ddata():
     iris = datasets.load_iris()
     x = iris['data']
     y = iris['target']
@@ -111,12 +112,20 @@ def load_data():
 
 if __name__ == "__main__":
     # 初始化数据集和参数和假设
-    X_train,X_test,y_train,y_test = load_data()
+    X, y = load_data.breast_cancer()
+    # X = X[y != 2]
+    # y = y[y != 2]
+    # # 选择哪些数据
+    # X = X[:, ]
+    # # 给x第一列加一列1，常数项
+    X_one = np.ones([len(X)])
+    X = np.insert(X, 0, values=X_one, axis=1)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
     classfier = LogisticRegression()
     classfier.fit(X_train, y_train)
-    print(X_test)
     accuracy = classfier.accuracy(X_test,y_test)
-    print(accuracy)
+    print('test accuracy is ',accuracy)
 
     # cross validation
     kf = KFOLD(X_train, y_train, 10)

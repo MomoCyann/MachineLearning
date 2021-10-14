@@ -3,6 +3,7 @@ from sklearn import datasets
 import matplotlib.pyplot as plt
 from KFOLD.KFOLD import KFOLD
 from sklearn.model_selection import train_test_split
+import load_data
 
 class SVM:
 
@@ -134,28 +135,28 @@ class SVM:
         decision_boundary = - self.w[0] / self.w[1] * x0 - self.b / self.w[1]
         plt.plot(x0, decision_boundary, "k", linewidth=2)
 
-def load_data():
-    # 鸢尾花
-    iris = datasets.load_iris()
-    x = iris['data']
-    y = iris['target']
-    x = x[y != 2]
-    x = x[:, 2:]
-    y = y[y != 2]
-    y[y == 0] = -1
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
-    return x_train, x_test, y_train, y_test
 
 def draw_data(X, Y):
     plt.scatter(X[:, 0], X[:, 1], c=np.squeeze(Y), cmap=plt.cm.Spectral)
     plt.show()
 
 if __name__ == "__main__":
-    X_train,X_test,y_train,y_test = load_data()
+    # X, y = load_data.iris()
+    # X = X[y != 2]
+    # y = y[y != 2]
+    # y[y == 0] = -1
+
+    # X, y = load_data.make_moons()
+    # y[y == 0] = -1
+
+    X, y = load_data.make_moons()
+    y[y == 0] = -1
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
     classfier = SVM()
     classfier.fit(X_train, y_train)
     accuracy = classfier.accuracy(X_test, y_test)
-    print(accuracy)
+    print('test accuracy is ',accuracy)
 
     # draw
     classfier.draw_dec_bud()
