@@ -1,4 +1,4 @@
-from sklearn.datasets import load_iris,load_breast_cancer
+from sklearn.datasets import load_iris,load_breast_cancer,load_diabetes
 import pandas as pd
 import numpy as np
 from sklearn import datasets
@@ -19,6 +19,12 @@ def breast_cancer():
 def make_moons():
     X, y = datasets.make_moons(n_samples=100, noise=0.15, random_state=0)
     #Y[Y == 0] = -1
+    return X,y
+
+def diabetes():
+    diabetes= load_diabetes()
+    X = diabetes.data
+    y = diabetes.target
     return X,y
 
 def abalone():

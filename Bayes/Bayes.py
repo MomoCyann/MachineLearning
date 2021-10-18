@@ -39,7 +39,7 @@ class BAYES:
             vars.append(self.X_train[self.y_train == i].var(axis=0))
         return np.array(vars)
 
-    # 通过高斯分布的概率密度函数计算出似然再连乘得到似然度。
+    # 通过高斯分布的概率密度函数计算出似然再连乘。
     def cal_likelihood(self, X_test):
         #np.prod()连乘
         return (1 / sqrt(2 * pi * self.vars) * exp(-(X_test - self.avgs) ** 2 / (2 * self.vars))).prod(axis=1)

@@ -13,7 +13,7 @@ import load_data
 class LogisticRegression:
 
     def __init__(self):
-        self.alpha = 0.009
+        self.alpha = 0.01
         self.gen = 100
         self.hx = []
         self.y = []
@@ -26,7 +26,8 @@ class LogisticRegression:
 
 
     def sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
+        # return 1 / (1 + np.exp(-x)) 溢出
+        return .5 * (1 + np.tanh(.5 * x))
 
     def fit(self, X_train, y_train):
         # 初始化数据集和参数和假设
@@ -61,7 +62,7 @@ class LogisticRegression:
     def cal_loss(self):
         sum = 0
         for i in range(len(self.hx)):
-            sum += self.y_train[i] * np.log(self.hx[i]) + (1-self.y_train[i]) * np.log(1-self.hx[i])
+            sum += self.y_train[i] * np.log(self.hx[i] + 1e-5) + (1-self.y_train[i]) * np.log(1-self.hx[i] + 1e-5)
         return sum * (-1) / len(self.hx)
 
 
@@ -112,11 +113,11 @@ def load_ddata():
 
 if __name__ == "__main__":
     # 初始化数据集和参数和假设
-    X, y = load_data.breast_cancer()
+    X, y = load_data.make_moons()
     # X = X[y != 2]
     # y = y[y != 2]
     # # 选择哪些数据
-    # X = X[:, ]
+    X = X[:,]
     # # 给x第一列加一列1，常数项
     X_one = np.ones([len(X)])
     X = np.insert(X, 0, values=X_one, axis=1)

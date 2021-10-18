@@ -88,7 +88,7 @@ class EVENT:
         duraa = self.cal_timeduration(t1,t2)
         v1 = spdobj[i-1]
         v2 = spdobj[i]
-        return ((v2-v1)/3.6) /duraa
+        return ((v2-v1)/3.6) /2
 
 
     def cal_timeduration(self, start, end):
@@ -144,6 +144,36 @@ class EVENT:
 
         self.spdsave.clear()
         self.accelsave.clear()
+
+    def get_a(self):
+        df = pd.read_csv(
+            self.datasetpath + "031267" + '/' + str(self.day) + self.filename_extenstion,
+            encoding='gbk')
+        df.rename(columns={u'脉冲车速(km/h)': 'spd', u'刹车': 'brk', u'采集时间': 'clt', u'存储时间': 'svt',
+                           u'左转向灯': 'lef', u'右转向灯': 'rgt'},
+                  inplace=True)
+        spdobj = df['spd']
+        cltobj = df['clt']
+        time = []
+        all_a = []
+        for i in range(len(spdobj)):
+            if i == 0 :
+                continue
+            delta_v = (spdobj[i] - spdobj[i-1])/ 3.6   # m/s
+            delta_t = self.cal_timeduration(cltobj[i-1],cltobj[i])
+            a = delta_v / delta_t
+            all_a.append(a)
+            time.append(cltobj[i-1])
+        dic = {
+            'start': time,
+            'a' : all_a
+        }
+        data = DataFrame(dic)
+        data.sort_values(by='start', inplace=True)
+        data_new = data.reset_index(drop=True)
+        data_new.to_csv(self.eventpath + "031267" + '/' + str(self.day) + 'a' + self.filename_extenstion,
+                        encoding='gbk')
+
 
 
     def accel_event(self, spdobj, cltobj):
@@ -325,7 +355,8 @@ class EVENT:
 
 if __name__ == '__main__':
     eventdetection = EVENT()
-    eventdetection.eventprocess()
+    eventdetection.get_a()
+    #eventdetection.eventprocess()
     print('提取完毕')
     print('提取完毕!!!')
 
