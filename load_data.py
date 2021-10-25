@@ -4,11 +4,13 @@ import numpy as np
 from sklearn import datasets
 PATH = 'D:/wakeup/ml_datasets/'
 
+
 def iris():
     iris = load_iris()
     X = iris.data
     y = iris.target
     return X,y
+
 
 def breast_cancer():
     cancer = load_breast_cancer()
@@ -16,16 +18,19 @@ def breast_cancer():
     y = cancer.target
     return X,y
 
+
 def make_moons():
     X, y = datasets.make_moons(n_samples=100, noise=0.15, random_state=0)
     #Y[Y == 0] = -1
     return X,y
 
+
 def diabetes():
-    diabetes= load_diabetes()
+    diabetes = load_diabetes()
     X = diabetes.data
     y = diabetes.target
     return X,y
+
 
 def abalone():
     data = pd.read_csv(PATH + 'abalone.csv')
@@ -38,6 +43,7 @@ def abalone():
     X = np.array(X)
     y = np.array(y)
     return X,y
+
 
 def yeast():
     data = pd.read_csv(PATH + 'yeast.csv')

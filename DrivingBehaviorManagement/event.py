@@ -1,4 +1,4 @@
-#-*- coding : utf-8 -*-
+# -*- coding : utf-8 -*-
 # coding: utf-8
 import os
 import pandas as pd
@@ -6,7 +6,7 @@ import numpy as np
 import datetime
 from pandas.core.frame import DataFrame
 
-#TODO 特征向量，
+# TODO 特征向量，
 # 驾驶行为数据里面，有急加速 急减速 转弯 疲劳驾驶
 # 猛踩油门 空档滑行等等应该是油耗相关
 
@@ -53,6 +53,21 @@ pattern的做法是 根据事件间隔 遍历所有事件  间隔内的就进入
 '''
 
 
+def cal_timeduration(start, end):
+    starttime = datetime.datetime.strptime(str(start), "%Y%m%d%H%M%S")
+    endtime = datetime.datetime.strptime(str(end), "%Y%m%d%H%M%S")
+    return (endtime - starttime).seconds
+
+
+def cal_accel(i, spdobj, cltobj):
+    t1 = cltobj[i - 1]
+    t2 = cltobj[i]
+    time_dura = cal_timeduration(t1, t2)
+    v1 = spdobj[i - 1]
+    v2 = spdobj[i]
+    return ((v2 - v1) / 3.6) / time_dura
+
+
 class EVENT:
 
     def __init__(self):
@@ -81,28 +96,11 @@ class EVENT:
         self.accelsave = []
         self.spdsave = []
 
-
-    def cal_accel(self, i, spdobj, cltobj):
-        t1 = cltobj[i-1]
-        t2 = cltobj[i]
-        duraa = self.cal_timeduration(t1,t2)
-        v1 = spdobj[i-1]
-        v2 = spdobj[i]
-        return ((v2-v1)/3.6) /2
-
-
-    def cal_timeduration(self, start, end):
-        starttime = datetime.datetime.strptime(str(start),"%Y%m%d%H%M%S")
-        endtime = datetime.datetime.strptime(str(end),"%Y%m%d%H%M%S")
-        return (endtime -  starttime).seconds
-
-
     def checkemptyaccel(self, accelsave):
         if not accelsave:
             return True
         else:
             return False
-
 
     def clearevent(self):
         self.start.clear()
@@ -119,12 +117,12 @@ class EVENT:
         self.ahead.clear()
         self.type.clear()
 
-    def eventresult(self, start, end, a):
+    def eventresult(self, start, end):
         # 刹车结束 结算各项指标
         self.start.append(start)
         self.endt.append(end)
         # 持续时间
-        self.durat.append(self.cal_timeduration(start, end))
+        self.durat.append(cal_timeduration(start, end))
         # 速度差
         self.spddif.append(max(self.spdsave) - min(self.spdsave))
         # 速度标准差
@@ -157,16 +155,16 @@ class EVENT:
         time = []
         all_a = []
         for i in range(len(spdobj)):
-            if i == 0 :
+            if i == 0:
                 continue
-            delta_v = (spdobj[i] - spdobj[i-1])/ 3.6   # m/s
-            delta_t = self.cal_timeduration(cltobj[i-1],cltobj[i])
+            delta_v = (spdobj[i] - spdobj[i - 1]) / 3.6  # m/s
+            delta_t = cal_timeduration(cltobj[i - 1], cltobj[i])
             a = delta_v / delta_t
             all_a.append(a)
-            time.append(cltobj[i-1])
+            time.append(cltobj[i - 1])
         dic = {
             'start': time,
-            'a' : all_a
+            'a': all_a
         }
         data = DataFrame(dic)
         data.sort_values(by='start', inplace=True)
@@ -174,10 +172,8 @@ class EVENT:
         data_new.to_csv(self.eventpath + "031267" + '/' + str(self.day) + 'a' + self.filename_extenstion,
                         encoding='gbk')
 
-
-
     def accel_event(self, spdobj, cltobj):
-        #事件：采集时间，结束时间，持续时间，速度差，速度标准差，速度均值
+        # 事件：采集时间，结束时间，持续时间，速度差，速度标准差，速度均值
         # 最大加速度，最小加速度，加速度差，加速度标准差，加速度均值，首尾加速度和
         for i in range(len(spdobj)):
             # init
@@ -186,27 +182,26 @@ class EVENT:
                 continue
 
             # accel confirm
-            if spdobj[i] > spdobj[i-1]:
+            if spdobj[i] > spdobj[i - 1]:
                 if not isacceling:
                     isacceling = True
-                    #记录加速开始时间
-                    start = cltobj[i-1]
-                    self.spdsave.append(spdobj[i-1])
+                    # 记录加速开始时间
+                    start = cltobj[i - 1]
+                    self.spdsave.append(spdobj[i - 1])
 
-                a = self.cal_accel(i, spdobj, cltobj)
+                a = cal_accel(i, spdobj, cltobj)
                 self.accelsave.append(a)
                 self.spdsave.append(spdobj[i])
 
-            if spdobj[i] < spdobj[i-1]:
+            if spdobj[i] < spdobj[i - 1]:
                 if isacceling:
-                    end = cltobj[i-1]
+                    end = cltobj[i - 1]
                     isacceling = False
-                    self.eventresult(start, end, a)
-                    #事件类型
+                    self.eventresult(start, end)
+                    # 事件类型
                     self.type.append('a')
                 else:
                     continue
-
 
     def brake_event(self, spdobj, cltobj, brkobj):
         for i in range(len(brkobj)):
@@ -223,20 +218,19 @@ class EVENT:
                     continue
                 else:
                     continue
-            #刹车中
+            # 刹车中
             else:
-                a = self.cal_accel(i, spdobj, cltobj)
+                a = cal_accel(i, spdobj, cltobj)
                 self.accelsave.append(a)
                 self.spdsave.append(spdobj[i])
                 if brkobj[i] == 0:
                     end = cltobj[i]
                     isbraking = False
-                    self.eventresult(start, end, a)
+                    self.eventresult(start, end)
                     # 事件类型
                     self.type.append('b')
                     self.spdsave.clear()
                     self.accelsave.clear()
-
 
     def turn_event(self, spdobj, cltobj, lefobj, rgtobj):
         for i in range(len(lefobj)):
@@ -252,9 +246,9 @@ class EVENT:
                     continue
                 else:
                     continue
-            #转弯亮灯中
+            # 转弯亮灯中
             else:
-                a = self.cal_accel(i, spdobj, cltobj)
+                a = cal_accel(i, spdobj, cltobj)
                 self.accelsave.append(a)
                 self.spdsave.append(spdobj[i])
                 if lefobj[i] == 0:
@@ -279,20 +273,19 @@ class EVENT:
                     continue
                 else:
                     continue
-            #转弯亮灯中
+            # 转弯亮灯中
             else:
-                a = self.cal_accel(i, spdobj, cltobj)
+                a = cal_accel(i, spdobj, cltobj)
                 self.accelsave.append(a)
                 self.spdsave.append(spdobj[i])
                 if rgtobj[i] == 0:
                     end = cltobj[i]
                     isturning = False
-                    self.eventresult(start, end, a)
+                    self.eventresult(start, end)
                     # 事件类型
                     self.type.append('rt')
                     self.spdsave.clear()
                     self.accelsave.clear()
-
 
     def eventprocess(self):
         # 创建目录
@@ -305,7 +298,8 @@ class EVENT:
 
         for folder in self.folder_name:
             while self.day < 20200931:
-                dataisExists = os.path.exists(self.datasetpath + folder + '/' + str(self.day) + self.filename_extenstion)
+                dataisExists = os.path.exists(
+                    self.datasetpath + folder + '/' + str(self.day) + self.filename_extenstion)
                 if dataisExists:
                     df = pd.read_csv(
                         self.datasetpath + folder + '/' + str(self.day) + self.filename_extenstion,
@@ -326,25 +320,25 @@ class EVENT:
                     self.turn_event(spdobj, cltobj, lefobj, rgtobj)
 
                     dic = {
-                        'start' : self.start,
-                        'end' : self.endt,
-                        'durat' : self.durat,
-                        'spddif' : self.spddif,
-                        'spdstd' : self.spdstd,
-                        'spdmea' : self.spdmea,
-                        'amax' : self.amax,
-                        'amin' : self.amin,
-                        'adif' : self.adif,
-                        'astd' : self.astd,
-                        'amea' : self.amea,
-                        'ahead' :self.ahead,
-                        'type' : self.type
+                        'start': self.start,
+                        'end': self.endt,
+                        'durat': self.durat,
+                        'spddif': self.spddif,
+                        'spdstd': self.spdstd,
+                        'spdmea': self.spdmea,
+                        'amax': self.amax,
+                        'amin': self.amin,
+                        'adif': self.adif,
+                        'astd': self.astd,
+                        'amea': self.amea,
+                        'ahead': self.ahead,
+                        'type': self.type
                     }
                     data = DataFrame(dic)
                     data.sort_values(by='start', inplace=True)
                     data_new = data.reset_index(drop=True)
                     data_new.to_csv(self.eventpath + folder + '/' + str(self.day) + 'event' + self.filename_extenstion,
-                                encoding='gbk')
+                                    encoding='gbk')
                     print("complete")
                     self.clearevent()
                     self.day += 1
@@ -353,15 +347,10 @@ class EVENT:
                     self.day += 1
             self.day = 20200901
 
+
 if __name__ == '__main__':
     eventdetection = EVENT()
     eventdetection.get_a()
-    #eventdetection.eventprocess()
+    # eventdetection.eventprocess()
     print('提取完毕')
     print('提取完毕!!!')
-
-
-
-
-
-

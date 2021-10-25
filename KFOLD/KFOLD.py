@@ -3,13 +3,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 import matplotlib.pyplot as plt
 
+
 class KFOLD:
 
     def __init__(self, X, y, folds):
         self.X = X
         self.y = y
         self.folds = folds
-
+        self.acc = []
 
     def cross_validation(self,clf):
         X_folds = np.array_split(self.X, self.folds, axis=0)
