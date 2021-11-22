@@ -6,9 +6,8 @@ import numpy as np
 import datetime
 from pandas.core.frame import DataFrame
 
-# TODO 特征向量，
-# 驾驶行为数据里面，有急加速 急减速 转弯 疲劳驾驶
-# 猛踩油门 空档滑行等等应该是油耗相关
+# TODO 持续2秒只有一个加速度，所以标准差为空 2、清除掉为加速度为0的刹车  有时候没启动 踩刹车也被计入
+
 
 '''
 最大加速度
@@ -60,10 +59,10 @@ def cal_timeduration(start, end):
 
 
 def cal_accel(i, spdobj, cltobj):
-    t1 = cltobj[i - 1]
+    t1 = cltobj[i-1]
     t2 = cltobj[i]
     time_dura = cal_timeduration(t1, t2)
-    v1 = spdobj[i - 1]
+    v1 = spdobj[i-1]
     v2 = spdobj[i]
     return ((v2 - v1) / 3.6) / time_dura
 
@@ -74,9 +73,9 @@ class EVENT:
         self.folder_name = ["031267", "077102", "078351", "078837", "080913", "082529",
                             "090798", "098840", "108140", "112839"]
         self.filename_extenstion = '.csv'
-        self.datasetpath = "D:/wakeup/dataset/"
-        self.datapath = 'D:/wakeup/data/'
-        self.eventpath = "D:/wakeup/event/"
+        self.datasetpath = "E:/wakeup/dataset/"
+        self.datapath = 'E:/wakeup/data/'
+        self.eventpath = "E:/wakeup/event/"
         self.day = 20200901
 
         self.start = []
@@ -95,12 +94,6 @@ class EVENT:
 
         self.accelsave = []
         self.spdsave = []
-
-    def checkemptyaccel(self, accelsave):
-        if not accelsave:
-            return True
-        else:
-            return False
 
     def clearevent(self):
         self.start.clear()
@@ -129,16 +122,23 @@ class EVENT:
         self.spdstd.append(np.std(self.spdsave, ddof=1))
         # 速度均值
         self.spdmea.append(np.mean(self.spdsave))
+
+        # 加速度取绝对值
+        absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
-        self.amax.append(max(self.accelsave))
-        self.amin.append(min(self.accelsave))
-        self.adif.append(max(self.accelsave) - min(self.accelsave))
+        amax = max(absolute_a)
+        amin = min(absolute_a)
+        self.amax.append(amax)
+        # 最小加速度
+        self.amin.append(amin)
+        # 加速度极差
+        self.adif.append(amax - amin)
         # 加速度标准差
-        self.astd.append(np.std(self.accelsave, ddof=1))
+        self.astd.append(np.std(absolute_a, ddof=1))
         # 加速度均值
-        self.amea.append(np.mean(self.accelsave))
+        self.amea.append(np.mean(absolute_a))
         # 首尾加速度和
-        self.ahead.append(self.accelsave[0] + self.accelsave[-1])
+        self.ahead.append(absolute_a[0] + absolute_a[-1])
 
         self.spdsave.clear()
         self.accelsave.clear()
@@ -176,30 +176,35 @@ class EVENT:
         # 事件：采集时间，结束时间，持续时间，速度差，速度标准差，速度均值
         # 最大加速度，最小加速度，加速度差，加速度标准差，加速度均值，首尾加速度和
         for i in range(len(spdobj)):
-            # init
+            # 初始化标记
             if i == 0:
                 isacceling = False
                 continue
 
-            # accel confirm
-            if spdobj[i] > spdobj[i - 1]:
+            # 加速事件开始
+            if spdobj[i] > spdobj[i-1]:
                 if not isacceling:
                     isacceling = True
                     # 记录加速开始时间
-                    start = cltobj[i - 1]
-                    self.spdsave.append(spdobj[i - 1])
+                    start = cltobj[i-1]
+                    self.spdsave.append(spdobj[i-1])
 
                 a = cal_accel(i, spdobj, cltobj)
                 self.accelsave.append(a)
                 self.spdsave.append(spdobj[i])
 
-            if spdobj[i] < spdobj[i - 1]:
+            # 速度相同的时候 只录入速度
+            if spdobj[i] == spdobj[i-1]:
+                self.spdsave.append(spdobj[i])
+
+            # 加速事件停止条件的判定
+            if spdobj[i] < spdobj[i-1] or i == len(spdobj): #最后一个强制结束
                 if isacceling:
-                    end = cltobj[i - 1]
+                    end = cltobj[i-1]
                     isacceling = False
                     self.eventresult(start, end)
                     # 事件类型
-                    self.type.append('a')
+                    self.type.append('accel')
                 else:
                     continue
 
@@ -210,6 +215,7 @@ class EVENT:
                 isbraking = False
                 continue
 
+            # 减速事件开始
             if not isbraking:
                 if brkobj[i] == 1:
                     start = cltobj[i]
@@ -223,12 +229,14 @@ class EVENT:
                 a = cal_accel(i, spdobj, cltobj)
                 self.accelsave.append(a)
                 self.spdsave.append(spdobj[i])
-                if brkobj[i] == 0:
+
+                # 停止条件判定; 速度增加的时候也视为刹车停止
+                if brkobj[i] == 0 or spdobj[i] < spdobj[i-1]:
                     end = cltobj[i]
                     isbraking = False
                     self.eventresult(start, end)
                     # 事件类型
-                    self.type.append('b')
+                    self.type.append('brake')
                     self.spdsave.clear()
                     self.accelsave.clear()
 
@@ -254,9 +262,9 @@ class EVENT:
                 if lefobj[i] == 0:
                     end = cltobj[i]
                     isturning = False
-                    self.eventresult(start, end, a)
+                    self.eventresult(start, end)
                     # 事件类型
-                    self.type.append('lt')
+                    self.type.append('左转')
                     self.spdsave.clear()
                     self.accelsave.clear()
 
@@ -283,7 +291,7 @@ class EVENT:
                     isturning = False
                     self.eventresult(start, end)
                     # 事件类型
-                    self.type.append('rt')
+                    self.type.append('右转')
                     self.spdsave.clear()
                     self.accelsave.clear()
 
@@ -320,22 +328,22 @@ class EVENT:
                     self.turn_event(spdobj, cltobj, lefobj, rgtobj)
 
                     dic = {
-                        'start': self.start,
-                        'end': self.endt,
-                        'durat': self.durat,
-                        'spddif': self.spddif,
-                        'spdstd': self.spdstd,
-                        'spdmea': self.spdmea,
-                        'amax': self.amax,
-                        'amin': self.amin,
-                        'adif': self.adif,
-                        'astd': self.astd,
-                        'amea': self.amea,
-                        'ahead': self.ahead,
-                        'type': self.type
+                        '开始时间': self.start,
+                        '结束时间': self.endt,
+                        '持续时间': self.durat,
+                        '速度极差': self.spddif,
+                        '速度标准差': self.spdstd,
+                        '速度均值': self.spdmea,
+                        '最大加速度': self.amax,
+                        '最小加速度': self.amin,
+                        '加速度极差': self.adif,
+                        '加速度标准差': self.astd,
+                        '加速度均值': self.amea,
+                        '首尾加速度和': self.ahead,
+                        '事件类型': self.type
                     }
                     data = DataFrame(dic)
-                    data.sort_values(by='start', inplace=True)
+                    data.sort_values(by='开始时间', inplace=True)
                     data_new = data.reset_index(drop=True)
                     data_new.to_csv(self.eventpath + folder + '/' + str(self.day) + 'event' + self.filename_extenstion,
                                     encoding='gbk')
@@ -350,7 +358,9 @@ class EVENT:
 
 if __name__ == '__main__':
     eventdetection = EVENT()
-    eventdetection.get_a()
-    # eventdetection.eventprocess()
+    #eventdetection.get_a()
+    eventdetection.eventprocess()
     print('提取完毕')
     print('提取完毕!!!')
+
+
