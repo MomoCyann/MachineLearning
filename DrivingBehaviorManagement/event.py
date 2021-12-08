@@ -4,37 +4,13 @@ import os
 import pandas as pd
 import numpy as np
 import datetime
+from math import sqrt,pow,acos
 from pandas.core.frame import DataFrame
 
-# TODO 持续2秒只有一个加速度，所以标准差为空 2、清除掉为加速度为0的刹车  有时候没启动 踩刹车也被计入
+# TODO 持续2秒只有一个加速度，所以标准差为空 2、清除掉为加速度为0的刹车  有时候没启动 踩刹车也被计入 3/刹车的加速度要不也弄成负数，反正是变化的趋势
 
 
 '''
-最大加速度
-最小加速度
-最大陀螺仪值？
-速度差 
-持续时间
-
-range of accel 加速度差
-加速度差 y轴
-加速度标准差
-加速度标准差y轴
-加速度均值
-加速度均值 y轴
-gyroscope均值
-速度均值
-
-Axis direction
-加速度最大 Y轴
-the sum of the start and end values of the accel(首尾加速度和)
-
-gyro标准差
-gyro标准差y轴
-gyto均值y轴
-加速度最小y轴
-速度标准差
-
 
 把事件单独提出来做一个各自的表
 序号 事件类型 采集时间 存储时间 持续时间 结束时间 风险等级 然后各特征向量
@@ -65,6 +41,30 @@ def cal_accel(i, spdobj, cltobj):
     v1 = spdobj[i-1]
     v2 = spdobj[i]
     return ((v2 - v1) / 3.6) / time_dura
+
+
+def cal_angle(i, lgtobj, latobj):
+    x1 = lgtobj.iloc[i-1]
+    x2 = lgtobj.iloc[i]
+    x3 = lgtobj.iloc[i+1]
+    y1 = latobj.iloc[i-1]
+    y2 = latobj.iloc[i]
+    y3 = latobj.iloc[i+1]
+    #向量表示两段路程
+    vx1 = (x2 - x1) * 100000 #米
+    vy1 = (y2 - y1) * 100000 * 1.1
+    vx2 = (x3 - x2) * 100000
+    vy2 = (y3 - y2) * 100000 * 1.1
+    #求向量余弦值再转为角度
+    pi = 3.1415
+    ab = vx1 * vx2 + vy1 * vy2
+    mo = sqrt(pow(vx1, 2) + pow(vy1, 2)) * sqrt(pow(vx2, 2) + pow(vy2, 2))
+    cos = ab * 1.0 / (mo * 1.0 + 1e-6)
+    if cos==0.0:
+        return 0
+
+    angle = (acos(cos) / pi) * 180
+    return angle
 
 
 class EVENT:
@@ -110,7 +110,42 @@ class EVENT:
         self.ahead.clear()
         self.type.clear()
 
-    def eventresult(self, start, end):
+    def accel_eventresult(self, start, end):
+        # 加速结束 结算各项指标
+        self.start.append(start)
+        self.endt.append(end)
+        # 持续时间
+        self.durat.append(cal_timeduration(start, end))
+        # 速度差
+        self.spddif.append(max(self.spdsave) - min(self.spdsave))
+        # 速度标准差
+        self.spdstd.append(np.std(self.spdsave, ddof=1))
+        # 速度均值
+        self.spdmea.append(np.mean(self.spdsave))
+
+        # 加速度取绝对值
+        # absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
+        # 最大加速度
+        amax = max(self.accelsave)
+        amin = min(self.accelsave)
+        # amax = max(self.accelsave)
+        # amin = min(self.accelsave)
+        self.amax.append(amax)
+        # 最小加速度
+        self.amin.append(amin)
+        # 加速度极差
+        self.adif.append(amax - amin)
+        # 加速度标准差
+        self.astd.append(np.std(self.accelsave, ddof=1))
+        # 加速度均值
+        self.amea.append(np.mean(self.accelsave))
+        # 首尾加速度和
+        self.ahead.append(self.accelsave[0] + self.accelsave[-1])
+
+        self.spdsave.clear()
+        self.accelsave.clear()
+
+    def brake_eventresult(self, start, end):
         # 刹车结束 结算各项指标
         self.start.append(start)
         self.endt.append(end)
@@ -126,8 +161,46 @@ class EVENT:
         # 加速度取绝对值
         absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
+        amax = min(self.accelsave)
+        amin = max(self.accelsave)
+        # amax = max(self.accelsave)
+        # amin = min(self.accelsave)
+        self.amax.append(amax)
+        # 最小加速度
+        self.amin.append(amin)
+        # 加速度极差
+        self.adif.append(max(absolute_a) - min(absolute_a))
+        # 加速度标准差
+        self.astd.append(np.std(absolute_a, ddof=1))
+        # 加速度均值
+        self.amea.append(np.mean(absolute_a))
+        # 首尾加速度和
+        #self.ahead.append(self.accelsave[0] + self.accelsave[-1])
+        self.ahead.append(np.maximum(np.array(self.accelsave[0] + self.accelsave[-1]), -np.array(self.accelsave[0] + self.accelsave[-1])))
+
+        self.spdsave.clear()
+        self.accelsave.clear()
+
+    def turn_eventresult(self, start, end):
+        # 转弯结束 结算各项指标
+        self.start.append(start)
+        self.endt.append(end)
+        # 持续时间
+        self.durat.append(cal_timeduration(start, end))
+        # 速度差
+        self.spddif.append(max(self.spdsave) - min(self.spdsave))
+        # 速度标准差
+        self.spdstd.append(np.std(self.spdsave, ddof=1))
+        # 速度均值
+        self.spdmea.append(np.mean(self.spdsave))
+
+        # 加速度取绝对值，我认为只需要表示速度变化趋势的大小。
+        absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
+        # 最大加速度
         amax = max(absolute_a)
         amin = min(absolute_a)
+        # amax = max(self.accelsave)
+        # amin = min(self.accelsave)
         self.amax.append(amax)
         # 最小加速度
         self.amin.append(amin)
@@ -202,7 +275,7 @@ class EVENT:
                 if isacceling:
                     end = cltobj[i-1]
                     isacceling = False
-                    self.eventresult(start, end)
+                    self.accel_eventresult(start, end)
                     # 事件类型
                     self.type.append('accel')
                 else:
@@ -234,11 +307,10 @@ class EVENT:
                 if brkobj[i] == 0 or spdobj[i] < spdobj[i-1]:
                     end = cltobj[i]
                     isbraking = False
-                    self.eventresult(start, end)
+                    self.brake_eventresult(start, end)
                     # 事件类型
                     self.type.append('brake')
-                    self.spdsave.clear()
-                    self.accelsave.clear()
+
 
     def turn_event(self, spdobj, cltobj, lefobj, rgtobj):
         for i in range(len(lefobj)):
@@ -295,6 +367,58 @@ class EVENT:
                     self.spdsave.clear()
                     self.accelsave.clear()
 
+    def turn_event_gps(self, spdobj, cltobj, lgtobj, latobj):
+        lgtobj = lgtobj.dropna()
+        latobj = latobj.dropna()
+        # print(lgtobj.iloc[0]) #第一个值
+        # print(lgtobj.index[0]) #第一个位置的索引
+        for i in range(len(lgtobj)):
+            # 初始化标记
+            if i == 0:
+                isturning = False
+                continue
+            #最后一个点是算不了角度的，直接结束。
+            if i == len(lgtobj) - 1:
+                continue
+
+            #计算角度 需要3个点，遍历的i是中间的那个点，所以计算转弯起点是前一个点。转弯的加速度可能有减有加，算数学指标的时候记得区分。
+            angle = cal_angle(i, lgtobj, latobj)
+            if angle > 45:
+                if not isturning:
+                    isturning = True
+                    start = cltobj[lgtobj.index[i-1]]
+                    #因为gps数据有间隔，录入速度要把两个间隔之内的速度都录入
+                    for j in range(lgtobj.index[i-1],lgtobj.index[i]):
+                        if j == lgtobj.index[i-1]:
+                            self.spdsave.append(spdobj[j])
+                        self.spdsave.append(spdobj[j])
+                        a = cal_accel(j, spdobj, cltobj)
+                        self.accelsave.append(a)
+
+                # isturning = True
+                for k in range(lgtobj.index[i - 1], lgtobj.index[i]):
+                    if k == lgtobj.index[i - 1]:
+                        self.spdsave.append(spdobj[k])
+                    self.spdsave.append(spdobj[k])
+                    a = cal_accel(k, spdobj, cltobj)
+                    self.accelsave.append(a)
+
+            if angle < 45:
+                if isturning:
+                    end = cltobj[lgtobj.index[i]]
+                    isturning = False
+                    for l in range(lgtobj.index[i - 1], lgtobj.index[i]):
+                        if l == lgtobj.index[i - 1]:
+                            self.spdsave.append(spdobj[l])
+                        self.spdsave.append(spdobj[l])
+                        a = cal_accel(l, spdobj, cltobj)
+                        self.accelsave.append(a)
+
+                    self.turn_eventresult(start, end)
+                    # 事件类型
+                    self.type.append('turn')
+
+
     def eventprocess(self):
         # 创建目录
         for folder in self.folder_name:
@@ -313,20 +437,24 @@ class EVENT:
                         self.datasetpath + folder + '/' + str(self.day) + self.filename_extenstion,
                         encoding='gbk')
                     df.rename(columns={u'脉冲车速(km/h)': 'spd', u'刹车': 'brk', u'采集时间': 'clt', u'存储时间': 'svt',
-                                       u'左转向灯': 'lef', u'右转向灯': 'rgt'},
+                                       u'左转向灯': 'lef', u'右转向灯': 'rgt', u'经度': 'lgt', u'纬度': 'lat'},
                               inplace=True)
                     spdobj = df['spd']
                     cltobj = df['clt']
                     brkobj = df['brk']
                     lefobj = df['lef']
                     rgtobj = df['rgt']
+                    lgtobj = df['lgt']
+                    latobj = df['lat']
                     # # 列名占了一行 数据列从2开始
                     # # df['spd'][1] = spdobj[0]
                     # print(spdobj[0])
                     self.accel_event(spdobj, cltobj)
                     self.brake_event(spdobj, cltobj, brkobj)
-                    self.turn_event(spdobj, cltobj, lefobj, rgtobj)
+                    # self.turn_event(spdobj, cltobj, lefobj, rgtobj)
+                    self.turn_event_gps(spdobj, cltobj, lgtobj, latobj)
 
+                    #有些事件只有一个加速度，求标准差则是空值。
                     dic = {
                         '开始时间': self.start,
                         '结束时间': self.endt,
