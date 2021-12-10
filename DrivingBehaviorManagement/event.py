@@ -7,7 +7,7 @@ import datetime
 from math import sqrt,pow,acos
 from pandas.core.frame import DataFrame
 
-# TODO 持续2秒只有一个加速度，所以标准差为空 2、清除掉为加速度为0的刹车  有时候没启动 踩刹车也被计入 3/刹车的加速度要不也弄成负数，反正是变化的趋势
+# TODO 持续2秒只有一个加速度，所以标准差为空 2、加入最大最小速度指标
 
 
 '''
@@ -81,6 +81,8 @@ class EVENT:
         self.start = []
         self.endt = []
         self.durat = []
+        self.spdmax = []
+        self.spdmin = []
         self.spddif = []
         self.spdstd = []
         self.spdmea = []
@@ -99,6 +101,8 @@ class EVENT:
         self.start.clear()
         self.endt.clear()
         self.durat.clear()
+        self.spdmax.clear()
+        self.spdmin.clear()
         self.spddif.clear()
         self.spdstd.clear()
         self.spdmea.clear()
@@ -116,6 +120,9 @@ class EVENT:
         self.endt.append(end)
         # 持续时间
         self.durat.append(cal_timeduration(start, end))
+        # 速度最大最小值
+        self.spdmax.append(max(self.spdsave))
+        self.spdmin.append(min(self.spdsave))
         # 速度差
         self.spddif.append(max(self.spdsave) - min(self.spdsave))
         # 速度标准差
@@ -136,7 +143,10 @@ class EVENT:
         # 加速度极差
         self.adif.append(amax - amin)
         # 加速度标准差
-        self.astd.append(np.std(self.accelsave, ddof=1))
+        if np.std(self.accelsave, ddof=1) != np.std(self.accelsave, ddof=1):
+            self.astd.append(0)
+        else:
+            self.astd.append(np.std(self.accelsave, ddof=1))
         # 加速度均值
         self.amea.append(np.mean(self.accelsave))
         # 首尾加速度和
@@ -151,6 +161,9 @@ class EVENT:
         self.endt.append(end)
         # 持续时间
         self.durat.append(cal_timeduration(start, end))
+        # 速度最大最小值
+        self.spdmax.append(max(self.spdsave))
+        self.spdmin.append(min(self.spdsave))
         # 速度差
         self.spddif.append(max(self.spdsave) - min(self.spdsave))
         # 速度标准差
@@ -161,8 +174,8 @@ class EVENT:
         # 加速度取绝对值
         absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
-        amax = min(self.accelsave)
-        amin = max(self.accelsave)
+        amax = min(absolute_a)
+        amin = max(absolute_a)
         # amax = max(self.accelsave)
         # amin = min(self.accelsave)
         self.amax.append(amax)
@@ -171,12 +184,15 @@ class EVENT:
         # 加速度极差
         self.adif.append(max(absolute_a) - min(absolute_a))
         # 加速度标准差
-        self.astd.append(np.std(absolute_a, ddof=1))
+        if np.std(absolute_a, ddof=1) != np.std(absolute_a, ddof=1):
+            self.astd.append(0)
+        else:
+            self.astd.append(np.std(absolute_a, ddof=1))
         # 加速度均值
         self.amea.append(np.mean(absolute_a))
         # 首尾加速度和
         #self.ahead.append(self.accelsave[0] + self.accelsave[-1])
-        self.ahead.append(np.maximum(np.array(self.accelsave[0] + self.accelsave[-1]), -np.array(self.accelsave[0] + self.accelsave[-1])))
+        self.ahead.append(absolute_a[0] + absolute_a[-1])
 
         self.spdsave.clear()
         self.accelsave.clear()
@@ -187,6 +203,9 @@ class EVENT:
         self.endt.append(end)
         # 持续时间
         self.durat.append(cal_timeduration(start, end))
+        # 速度最大最小值
+        self.spdmax.append(max(self.spdsave))
+        self.spdmin.append(min(self.spdsave))
         # 速度差
         self.spddif.append(max(self.spdsave) - min(self.spdsave))
         # 速度标准差
@@ -207,7 +226,10 @@ class EVENT:
         # 加速度极差
         self.adif.append(amax - amin)
         # 加速度标准差
-        self.astd.append(np.std(absolute_a, ddof=1))
+        if np.std(absolute_a, ddof=1) != np.std(absolute_a, ddof=1):
+            self.astd.append(0)
+        else:
+            self.astd.append(np.std(absolute_a, ddof=1))
         # 加速度均值
         self.amea.append(np.mean(absolute_a))
         # 首尾加速度和
@@ -456,9 +478,12 @@ class EVENT:
 
                     #有些事件只有一个加速度，求标准差则是空值。
                     dic = {
+                        '车辆编号': folder,
                         '开始时间': self.start,
                         '结束时间': self.endt,
                         '持续时间': self.durat,
+                        '最大速度': self.spdmax,
+                        '最小速度': self.spdmin,
                         '速度极差': self.spddif,
                         '速度标准差': self.spdstd,
                         '速度均值': self.spdmea,

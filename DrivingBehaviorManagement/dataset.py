@@ -17,8 +17,8 @@ class SET:
         self.folder_name = ["031267", "077102", "078351", "078837", "080913", "082529",
                             "090798", "098840", "108140", "112839"]
         self.filename_extenstion = '.csv'
-        self.datasetpath = "D:/wakeup/dataset/"
-        self.datapath = 'D:/wakeup/data/'
+        self.datasetpath = "E:/wakeup/dataset/"
+        self.datapath = 'E:/wakeup/data/'
         self.day = 20200901
 
     def generate_folder(self):
@@ -49,6 +49,11 @@ class SET:
                     print(gps.head())
                     data = pd.merge(spd, swt, on=['采集时间', '存储时间'], how='left')
                     data = pd.merge(data, gps, on=['采集时间', '存储时间'], how='left')
+                    data['No.'] = data.apply(lambda x: folder, axis=1)
+                    #调换一下编号列位置
+                    numb = data['No.']
+                    data.drop(labels=['No.'], axis=1, inplace=True)
+                    data.insert(0, 'No.', numb)
                     data.to_csv(self.datasetpath + folder + '/' + str(self.day) + self.filename_extenstion,
                                 encoding='gbk', )
                     self.day += 1
