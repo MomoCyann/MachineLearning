@@ -54,6 +54,7 @@ class EventArrange:
         df1.to_csv(self.root + 'allevents' + self.filename_extenstion,
                    encoding='gbk')
 
+
 if __name__ == '__main__':
     event_collector = EventArrange()
     event_collector.event_collection()

@@ -87,6 +87,7 @@ class EVENT:
         self.spdstd = []
         self.spdmea = []
         self.amax = []
+        self.spdcrt = []
         self.amin = []
         self.adif = []
         self.astd = []
@@ -96,6 +97,8 @@ class EVENT:
 
         self.accelsave = []
         self.spdsave = []
+        self.spdsave_pure = []
+        #不考虑相同速度记录，为了算临界速度
 
     def clearevent(self):
         self.start.clear()
@@ -107,6 +110,7 @@ class EVENT:
         self.spdstd.clear()
         self.spdmea.clear()
         self.amax.clear()
+        self.spdcrt.clear()
         self.amin.clear()
         self.adif.clear()
         self.astd.clear()
@@ -134,6 +138,10 @@ class EVENT:
         # absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
         amax = max(self.accelsave)
+        # 达到最大加速度时的速度
+        tar = self.accelsave.index(max(self.accelsave))
+        crtspd = (self.spdsave_pure[tar] + self.spdsave_pure[tar+1]) / 2
+        self.spdcrt.append(crtspd)
         amin = min(self.accelsave)
         # amax = max(self.accelsave)
         # amin = min(self.accelsave)
@@ -153,6 +161,7 @@ class EVENT:
         self.ahead.append(self.accelsave[0] + self.accelsave[-1])
 
         self.spdsave.clear()
+        self.spdsave_pure.clear()
         self.accelsave.clear()
 
     def brake_eventresult(self, start, end):
@@ -175,6 +184,11 @@ class EVENT:
         absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
         amax = min(absolute_a)
+        # 达到最大加速度时的速度
+        tar = self.accelsave.index(max(self.accelsave))
+        crtspd = (self.spdsave[tar] + self.spdsave[tar + 1]) / 2
+        self.spdcrt.append(crtspd)
+
         amin = max(absolute_a)
         # amax = max(self.accelsave)
         # amin = min(self.accelsave)
@@ -195,6 +209,7 @@ class EVENT:
         self.ahead.append(absolute_a[0] + absolute_a[-1])
 
         self.spdsave.clear()
+        self.spdsave_pure.clear()
         self.accelsave.clear()
 
     def turn_eventresult(self, start, end):
@@ -217,6 +232,11 @@ class EVENT:
         absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
         amax = max(absolute_a)
+        # 达到最大加速度时的速度
+        tar = self.accelsave.index(max(self.accelsave))
+        crtspd = (self.spdsave[tar] + self.spdsave[tar + 1]) / 2
+        self.spdcrt.append(crtspd)
+
         amin = min(absolute_a)
         # amax = max(self.accelsave)
         # amin = min(self.accelsave)
@@ -236,6 +256,7 @@ class EVENT:
         self.ahead.append(absolute_a[0] + absolute_a[-1])
 
         self.spdsave.clear()
+        self.spdsave_pure.clear()
         self.accelsave.clear()
 
     def get_a(self):
@@ -283,10 +304,12 @@ class EVENT:
                     # 记录加速开始时间
                     start = cltobj[i-1]
                     self.spdsave.append(spdobj[i-1])
+                    self.spdsave_pure.append(spdobj[i])
 
                 a = cal_accel(i, spdobj, cltobj)
                 self.accelsave.append(a)
                 self.spdsave.append(spdobj[i])
+                self.spdsave_pure.append(spdobj[i])
 
             # 速度相同的时候 只录入速度
             if spdobj[i] == spdobj[i-1]:
@@ -487,6 +510,7 @@ class EVENT:
                         '速度极差': self.spddif,
                         '速度标准差': self.spdstd,
                         '速度均值': self.spdmea,
+                        '临界速度': self.spdcrt,
                         '最大加速度': self.amax,
                         '最小加速度': self.amin,
                         '加速度极差': self.adif,
