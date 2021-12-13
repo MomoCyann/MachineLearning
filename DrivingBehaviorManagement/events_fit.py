@@ -12,6 +12,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from sklearn.preprocessing import StandardScaler
 from KFOLD.KFOLD import KFOLD
+from sklearn.metrics import classification_report
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_auc_score
 
 class Eventfit:
 
@@ -28,6 +31,10 @@ class Eventfit:
         self.accel_data = self.data[(self.data['事件类型'] == 'accel')]
         self.brake_data = self.data[(self.data['事件类型'] == 'brake')]
         self.turn_data = self.data[(self.data['事件类型'] == 'turn')]
+
+        self.y_test_all = pd.DataFrame([])
+        self.y_pred_all = pd.DataFrame([])
+        self.y_pred_all_proba = pd.DataFrame([])
 
         self.acc = 0
 
@@ -103,51 +110,77 @@ class Eventfit:
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,random_state=1)
             if item['事件类型'][0] == 'accel':
+                self.y_test_all = pd.concat([self.y_test_all, y_test])
                 clf_accel = svm.SVC()
                 clf_accel.fit(X_train, y_train)
                 # 交叉验证
                 kf_accel = KFOLD(X, y, 10)
                 accel_scores = []
-                clf_accel = svm.SVC()
+                clf_accel = svm.SVC(decision_function_shape='ovr', probability=True)
                 clf_accel.fit(X_train, y_train)
                 accel_scores.append(kf_accel.cross_validation(clf_accel))
                 accel_score = np.mean(accel_scores)
+                # pred
+                y_pred_accel = pd.DataFrame(clf_accel.predict(X_test))
+                y_pred_accel_proba = pd.DataFrame(clf_accel.predict_proba(X_test))
+                self.y_pred_all_proba = pd.concat([self.y_pred_all_proba, y_pred_accel_proba])
+                self.y_pred_all = pd.concat([self.y_pred_all, y_pred_accel])
+
+
 
             if item['事件类型'][0] == 'brake':
+                self.y_test_all = pd.concat([self.y_test_all, y_test])
                 clf_brake = svm.SVC()
                 clf_brake.fit(X_train, y_train)
                 # 交叉验证
                 kf_brake = KFOLD(X, y, 10)
                 brake_scores = []
-                clf_brake = svm.SVC()
+                clf_brake = svm.SVC(decision_function_shape='ovr', probability=True)
                 clf_brake.fit(X_train, y_train)
                 brake_scores.append(kf_brake.cross_validation(clf_brake))
                 brake_score = np.mean(brake_scores)
+                # pred
+                y_pred_brake = pd.DataFrame(clf_brake.predict(X_test))
+                y_pred_brake_proba = pd.DataFrame(clf_brake.predict_proba(X_test))
+                self.y_pred_all_proba = pd.concat([self.y_pred_all_proba, y_pred_brake_proba])
+                self.y_pred_all = pd.concat([self.y_pred_all, y_pred_brake])
 
             if item['事件类型'][0] == 'turn':
+                self.y_test_all = pd.concat([self.y_test_all, y_test])
                 clf_turn = svm.SVC()
                 clf_turn.fit(X_train, y_train)
                 # 交叉验证
                 kf_turn = KFOLD(X, y, 10)
                 turn_scores = []
-                clf_turn = svm.SVC()
+                clf_turn = svm.SVC(decision_function_shape='ovr', probability=True)
                 clf_turn.fit(X_train, y_train)
                 turn_scores.append(kf_turn.cross_validation(clf_turn))
                 turn_score = np.mean(turn_scores)
+                # pred
+                y_pred_turn = pd.DataFrame(clf_turn.predict(X_test))
+                y_pred_turn_proba = pd.DataFrame(clf_turn.predict_proba(X_test))
+                self.y_pred_all_proba = pd.concat([self.y_pred_all_proba, y_pred_turn_proba])
+                self.y_pred_all = pd.concat([self.y_pred_all, y_pred_turn])
 
         self.acc = (accel_score + brake_score + turn_score) / 3
-        print(self.acc)
+        # print(self.acc)
 
     def get_acc(self):
-        return self.acc
+        print(accuracy_score(self.y_test_all, self.y_pred_all, normalize=True))
 
+    def get_f1_score(self):
+        print(classification_report(self.y_test_all, self.y_pred_all))
+
+    def get_auc(self):
+        print(roc_auc_score(self.y_test_all, self.y_pred_all_proba, multi_class='ovr'))
 
 if __name__ == '__main__':
     event_fitter = Eventfit()
-    accs = []
-    for i in range(10):
-        event_fitter.fit()
-        acc = event_fitter.get_acc()
-        accs.append(acc)
-
-    print('the final result: ' + str(np.mean(accs)))
+    # for i in range(10):
+    #     event_fitter.fit()
+    #     acc = event_fitter.get_acc()
+    #     accs.append(acc)
+    event_fitter.fit()
+    event_fitter.get_acc()
+    event_fitter.get_f1_score()
+    event_fitter.get_auc()
