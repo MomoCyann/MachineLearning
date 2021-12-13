@@ -140,7 +140,7 @@ class EVENT:
         amax = max(self.accelsave)
         # 达到最大加速度时的速度
         tar = self.accelsave.index(max(self.accelsave))
-        crtspd = (self.spdsave_pure[tar] + self.spdsave_pure[tar+1]) / 2
+        crtspd = (self.spdsave[tar] + self.spdsave[tar+1]) / 2
         self.spdcrt.append(crtspd)
         amin = min(self.accelsave)
         # amax = max(self.accelsave)
@@ -183,13 +183,13 @@ class EVENT:
         # 加速度取绝对值
         absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
-        amax = min(absolute_a)
+        amax = min(self.accelsave)
         # 达到最大加速度时的速度
         tar = self.accelsave.index(max(self.accelsave))
         crtspd = (self.spdsave[tar] + self.spdsave[tar + 1]) / 2
         self.spdcrt.append(crtspd)
 
-        amin = max(absolute_a)
+        amin = max(self.accelsave)
         # amax = max(self.accelsave)
         # amin = min(self.accelsave)
         self.amax.append(amax)
@@ -231,13 +231,16 @@ class EVENT:
         # 加速度取绝对值，我认为只需要表示速度变化趋势的大小。
         absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
-        amax = max(absolute_a)
+        amax = max(min(self.accelsave), max(self.accelsave), key=abs)
         # 达到最大加速度时的速度
         tar = self.accelsave.index(max(self.accelsave))
         crtspd = (self.spdsave[tar] + self.spdsave[tar + 1]) / 2
         self.spdcrt.append(crtspd)
 
-        amin = min(absolute_a)
+        amin = 999
+        for i in self.accelsave:
+            if max(i, -i) < amin:
+                amin = i
         # amax = max(self.accelsave)
         # amin = min(self.accelsave)
         self.amax.append(amax)
@@ -304,19 +307,19 @@ class EVENT:
                     # 记录加速开始时间
                     start = cltobj[i-1]
                     self.spdsave.append(spdobj[i-1])
-                    self.spdsave_pure.append(spdobj[i])
+                    #self.spdsave_pure.append(spdobj[i])
 
                 a = cal_accel(i, spdobj, cltobj)
                 self.accelsave.append(a)
                 self.spdsave.append(spdobj[i])
-                self.spdsave_pure.append(spdobj[i])
+                #self.spdsave_pure.append(spdobj[i])
 
-            # 速度相同的时候 只录入速度
-            if spdobj[i] == spdobj[i-1]:
-                self.spdsave.append(spdobj[i])
+            # # 速度相同的时候 只录入速度
+            # if spdobj[i] == spdobj[i-1]:
+            #     self.spdsave.append(spdobj[i])
 
             # 加速事件停止条件的判定
-            if spdobj[i] < spdobj[i-1] or i == len(spdobj): #最后一个强制结束
+            if spdobj[i] <= spdobj[i-1] or i == len(spdobj): #最后一个强制结束
                 if isacceling:
                     end = cltobj[i-1]
                     isacceling = False

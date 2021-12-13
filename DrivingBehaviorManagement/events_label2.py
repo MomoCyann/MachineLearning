@@ -37,11 +37,11 @@ class EventLabel:
               .reset_index(name='percentage'))
 
     def label_brake(self):
-        brake_bins = [-999, -2, -1, 1, 2, 999]
+        brake_bins = [-0.1, 1, 2, 999]
         self.brake_data = self.brake_data.copy()
         self.brake_data['风险等级'] = ''
-        self.brake_data['风险等级'] = pd.cut(x=self.brake_data['最大加速度'], bins=brake_bins, ordered=False,
-                                      labels=['高','中','低','中','高'])
+        self.brake_data['风险等级'] = pd.cut(x=self.brake_data['最大加速度'], bins=brake_bins,
+                                      labels=['低','中','高'])
         print('brake event label')
         print(self.brake_data['风险等级'].value_counts(normalize=True)
               .mul(100)
@@ -49,11 +49,11 @@ class EventLabel:
               .reset_index(name='percentage'))
 
     def label_turn(self):
-        turn_bins = [-999,-1.5,-1,1,1.5,999]
+        turn_bins = [-0.1,1,1.5,999]
         self.turn_data = self.turn_data.copy()
         self.turn_data['风险等级'] = ''
-        self.turn_data['风险等级'] = pd.cut(x=self.turn_data['最大加速度'], bins=turn_bins, ordered=False,
-                                      labels=['高','中','低','中','高'])
+        self.turn_data['风险等级'] = pd.cut(x=self.turn_data['最大加速度'], bins=turn_bins,
+                                      labels=['低','中','高'])
         print('turn event label')
         print(self.turn_data['风险等级'].value_counts(normalize=True)
               .mul(100)
