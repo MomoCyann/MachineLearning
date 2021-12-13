@@ -27,7 +27,7 @@ class KFOLD:
             accuracy = np.mean(y_val_pred == y_val)
             self.acc.append(accuracy)
         result=np.mean(self.acc)
-        print('KFOLD: the mean of accuracy is ',result)
+        #print('KFOLD: the mean of accuracy is ',result)
         return result
 
     def get_scores(self):
