@@ -17,7 +17,7 @@ root = "E:/wakeup/"
 patterns_data = pd.read_csv(root + 'all_patterns.csv', encoding='gbk')
 
 #构建词汇统计向量并保存，仅运行首次
-text = patterns_data.loc[:2000,'pattern']
+text = patterns_data.loc[:,'pattern']
 text_vectorizer = CountVectorizer(analyzer= 'char') # 设置单个字母
 text_vec = text_vectorizer.fit_transform(text)
 

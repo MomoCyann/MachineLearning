@@ -50,9 +50,9 @@ class Eventfit:
         data_medium = self.data[(self.data['风险等级'] == '中')]
         data_high = self.data[(self.data['风险等级'] == '高')]
 
-        data_high_sample = data_high.sample(n=4000, axis=0, random_state=None, replace=False)
-        data_medium_sample = data_medium.sample(n=12000, axis=0, random_state=None, replace=False)
-        data_normal_sample = data_normal.sample(n=32000, axis=0, random_state=None, replace=False)
+        data_high_sample = data_high.sample(n=2500, axis=0, random_state=None, replace=False)
+        data_medium_sample = data_medium.sample(n=7500, axis=0, random_state=None, replace=False)
+        data_normal_sample = data_normal.sample(n=20000, axis=0, random_state=None, replace=False)
 
         data_train_set = pd.concat([data_high_sample, data_medium_sample, data_normal_sample])
         data_train_set.sort_values(by='Unnamed: 0', inplace=True)
