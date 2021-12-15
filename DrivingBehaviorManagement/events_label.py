@@ -37,7 +37,7 @@ class EventLabel:
               .reset_index(name='percentage'))
 
     def label_brake(self):
-        brake_bins = [-999, -2, -1, 1, 2, 999]
+        brake_bins = [-999, -1.5, -1, 1, 1.5, 999]
         self.brake_data = self.brake_data.copy()
         self.brake_data['风险等级'] = ''
         self.brake_data['风险等级'] = pd.cut(x=self.brake_data['最大加速度'], bins=brake_bins, ordered=False,
@@ -65,8 +65,10 @@ class EventLabel:
         data.sort_values(by='Unnamed: 0', inplace=True)
         data.drop(labels=['Unnamed: 0'], axis=1, inplace=True)
         print('data bind complete')
+        print(data.groupby('事件类型')['风险等级'].value_counts())
         data.to_csv(self.root + 'allevents_label' + self.filename_extenstion,
                    encoding='gbk')
+
 
 
 if __name__ == '__main__':
@@ -75,3 +77,5 @@ if __name__ == '__main__':
     event_labeler.label_brake()
     event_labeler.label_turn()
     event_labeler.data_bind()
+
+

@@ -183,15 +183,15 @@ class EVENT:
         # 加速度取绝对值
         absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
-        amax = min(self.accelsave)
+        # amax = min(self.accelsave)
         # 达到最大加速度时的速度
         tar = self.accelsave.index(max(self.accelsave))
         crtspd = (self.spdsave[tar] + self.spdsave[tar + 1]) / 2
         self.spdcrt.append(crtspd)
 
-        amin = max(self.accelsave)
-        # amax = max(self.accelsave)
-        # amin = min(self.accelsave)
+        # amin = max(self.accelsave)
+        amax = max(absolute_a)
+        amin = min(absolute_a)
         self.amax.append(amax)
         # 最小加速度
         self.amin.append(amin)
@@ -231,18 +231,18 @@ class EVENT:
         # 加速度取绝对值，我认为只需要表示速度变化趋势的大小。
         absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
-        amax = max(min(self.accelsave), max(self.accelsave), key=abs)
+        # amax = max(min(self.accelsave), max(self.accelsave), key=abs)
         # 达到最大加速度时的速度
         tar = self.accelsave.index(max(self.accelsave))
         crtspd = (self.spdsave[tar] + self.spdsave[tar + 1]) / 2
         self.spdcrt.append(crtspd)
 
-        amin = 999
-        for i in self.accelsave:
-            if max(i, -i) < amin:
-                amin = i
-        # amax = max(self.accelsave)
-        # amin = min(self.accelsave)
+        # amin = 999
+        # for i in self.accelsave:
+        #     if max(i, -i) < amin:
+        #         amin = i
+        amax = max(absolute_a)
+        amin = min(absolute_a)
         self.amax.append(amax)
         # 最小加速度
         self.amin.append(amin)
