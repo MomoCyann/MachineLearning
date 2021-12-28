@@ -25,7 +25,7 @@ class EventLabel:
         self.turn_data = self.data[(self.data['事件类型'] == 'turn')]
 
     def label_accel(self):
-        accel_bins = [-0.1,1,1.5,999]
+        accel_bins = [-0.1, 0.8, 1, 999]
         self.accel_data = self.accel_data.copy()
         self.accel_data['风险等级']=''
         self.accel_data['风险等级'] = pd.cut(x=self.accel_data['最大加速度'],bins=accel_bins,
@@ -37,7 +37,7 @@ class EventLabel:
               .reset_index(name='percentage'))
 
     def label_brake(self):
-        brake_bins = [-999, -2, -1, 1, 2, 999]
+        brake_bins = [-999, -1.5, -1, 1, 1.5, 999]
         self.brake_data = self.brake_data.copy()
         self.brake_data['风险等级'] = ''
         self.brake_data['风险等级'] = pd.cut(x=self.brake_data['最大加速度'], bins=brake_bins, ordered=False,

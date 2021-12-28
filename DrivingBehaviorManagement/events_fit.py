@@ -15,6 +15,7 @@ from KFOLD.KFOLD import KFOLD
 from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_auc_score
+from sklearn.utils import shuffle
 
 class Eventfit:
 
@@ -52,7 +53,7 @@ class Eventfit:
 
         data_high_sample = data_high.sample(n=2500, axis=0, random_state=None, replace=False)
         data_medium_sample = data_medium.sample(n=7500, axis=0, random_state=None, replace=False)
-        data_normal_sample = data_normal.sample(n=20000, axis=0, random_state=None, replace=False)
+        data_normal_sample = data_normal.sample(n=50000, axis=0, random_state=None, replace=False)
 
         data_train_set = pd.concat([data_high_sample, data_medium_sample, data_normal_sample])
         data_train_set.sort_values(by='Unnamed: 0', inplace=True)
@@ -76,15 +77,15 @@ class Eventfit:
         turn_medium = self.turn_data[(self.turn_data['风险等级'] == '中')]
         turn_high = self.turn_data[(self.turn_data['风险等级'] == '高')]
 
-        accel_high_sample = accel_high.sample(n=500,axis=0,random_state=None,replace=False)
-        accel_medium_sample = accel_medium.sample(n=500, axis=0, random_state=None, replace=False)
-        accel_normal_sample = accel_normal.sample(n=500, axis=0, random_state=None, replace=False)
-        brake_high_sample = brake_high.sample(n=500, axis=0, random_state=None, replace=False)
-        brake_medium_sample = brake_medium.sample(n=500, axis=0, random_state=None, replace=False)
-        brake_normal_sample = brake_normal.sample(n=500, axis=0, random_state=None, replace=False)
-        turn_high_sample = turn_high.sample(n=500, axis=0, random_state=None, replace=False)
-        turn_medium_sample = turn_medium.sample(n=500, axis=0, random_state=None, replace=False)
-        turn_normal_sample = turn_normal.sample(n=500, axis=0, random_state=None, replace=False)
+        accel_high_sample = accel_high.sample(n=1000,axis=0,random_state=None,replace=False)
+        accel_medium_sample = accel_medium.sample(n=1000, axis=0, random_state=None, replace=False)
+        accel_normal_sample = accel_normal.sample(n=1000, axis=0, random_state=None, replace=False)
+        brake_high_sample = brake_high.sample(n=1000, axis=0, random_state=None, replace=False)
+        brake_medium_sample = brake_medium.sample(n=1000, axis=0, random_state=None, replace=False)
+        brake_normal_sample = brake_normal.sample(n=1000, axis=0, random_state=None, replace=False)
+        turn_high_sample = turn_high.sample(n=1000, axis=0, random_state=None, replace=False)
+        turn_medium_sample = turn_medium.sample(n=1000, axis=0, random_state=None, replace=False)
+        turn_normal_sample = turn_normal.sample(n=1000, axis=0, random_state=None, replace=False)
 
         accel_train_set = pd.concat([accel_high_sample, accel_medium_sample, accel_normal_sample])
         accel_train_set.sort_values(by='Unnamed: 0', inplace=True)
@@ -114,8 +115,10 @@ class Eventfit:
         return accel_train_set,brake_train_set,turn_train_set
 
     def fit_om(self):
-        data_train_set = self.sampler_om()
-
+        accel_train_set, brake_train_set, turn_train_set = self.sampler()
+        data_train_set = pd.concat([accel_train_set, brake_train_set, turn_train_set])
+        # data_train_set = self.sampler_om()
+        data_train_set = shuffle(data_train_set)
         y = data_train_set['风险等级']
         y = y.astype('int')
         X = data_train_set[['最大速度',
@@ -136,15 +139,18 @@ class Eventfit:
         X_train = self.std.transform(X_train)  # 讲规则应用到训练集
         X_test = self.std.transform(X_test)
 
+
         self.y_test_all = pd.concat([self.y_test_all, y_test])
         clf = svm.SVC(decision_function_shape='ovo', probability=True, class_weight = 'balanced')
         clf.fit(X_train, y_train)
 
-        # # 交叉验证
-        # kf_accel = KFOLD(X, y, 10)
-        # accel_scores = []
-        # accel_scores.append(kf_accel.cross_validation(clf_accel))
-        # accel_score = np.mean(accel_scores)
+        # 交叉验证
+        kf_accel = KFOLD(X_train, y_train, 10)
+        accel_scores = []
+        accel_scores.append(kf_accel.cross_validation(clf))
+        accel_score = np.mean(accel_scores)
+        print('交叉验证：')
+        print(accel_score)
 
         # pred
         y_pred_accel = pd.DataFrame(clf.predict(X_test))
