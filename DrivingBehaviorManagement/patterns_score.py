@@ -12,20 +12,27 @@ from sklearn.feature_extraction.text import CountVectorizer
 import joblib
 from sklearn.decomposition import LatentDirichletAllocation
 
-root = "E:/wakeup/"
+class ScoreEngine:
 
-all_patterns_proba = pd.read_csv(root + 'all_patterns_proba.csv', encoding='gbk')
-probability = all_patterns_proba.loc[:, ['0','1','2','3']]
+    def __init__(self):
+        self.root = "E:/wakeup/"
+        self.s1 = 100
+        self.s2 = 100
+        self.s3 = 50
+        self.s4 = 25
+        self.score_weight = np.array([self.s4, self.s1, self.s3, self.s2])
 
-s1 = 100
-s2 = 100
-s3 = 50
-s4 = 25
-score_weight = np.array([s4, s1, s3, s2])
-score = pd.DataFrame({'score': np.multiply(probability, score_weight).sum(1)})
+    def cal_pat_score(self):
+        all_patterns_proba = pd.read_csv(self.root + 'all_patterns_proba.csv', encoding='gbk')
 
-all_patterns_scores = all_patterns_proba.join(score, rsuffix='_right')
+        probability = all_patterns_proba.loc[:, ['0','1','2','3']]
+        score = pd.DataFrame({'score': np.multiply(probability, self.score_weight).sum(1)})
+        all_patterns_scores = all_patterns_proba.join(score, rsuffix='_right')
+        print('score complete')
 
-print('score complete')
+        all_patterns_scores.to_csv(self.root + 'all_patterns_scores.csv',encoding='gbk')
 
-all_patterns_scores.to_csv(root + 'all_patterns_scores.csv',encoding='gbk')
+if __name__ == '__main__':
+
+    se = ScoreEngine()
+    se.cal_pat_score()
