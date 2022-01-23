@@ -58,31 +58,46 @@ class PATTERNCOLLECT:
             m = 0
             the_car_data = pattern_data.loc[pattern_data['车辆编号'] == int(cars), :]
             start_time = the_car_data.iloc[m].loc['开始时间']
+            end_time_event = the_car_data.iloc[m].loc['结束时间']
             end_time = the_car_data.iloc[-1].loc['开始时间']
-            end_time_patn = start_time
+
             while m < the_car_data.shape[0]:
-                start_time_c = start_time # 复制一个starttime用作记录
+                start_time_c = start_time  # 复制一个starttime用作记录时间起点
                 event_gap = 0
                 end_time_patn = int(cal_nexttime(start_time, self.timegap))
-                while start_time < end_time_patn:
-                    m += 1
-                    event_gap += 1
-                    if m >= the_car_data.shape[0]:
-                        break
-                    else:
-                        start_time = the_car_data.iloc[m].loc['开始时间']
-                # start_time = the_car_data.iloc[m].loc['开始时间']
-                if end_time_patn < the_car_data.iloc[m-1].loc['结束时间']:
-                    #以最后一个事件的结束时间为pattern结束时间，并作为下一个P的开始时间
-                    end_time_patn = the_car_data.iloc[m-1].loc['结束时间']
+                if the_car_data.iloc[m].loc['开始时间'] < end_time_patn:
+                    #表示这段时间是有事件的
+                    while start_time < end_time_patn:
+                        if end_time_event <= end_time_patn:
+                            m += 1
+                            event_gap += 1
+                            if m >= the_car_data.shape[0]:
+                                break
+                            else:
+                                start_time = the_car_data.iloc[m].loc['开始时间']
+                                end_time_event = the_car_data.iloc[m].loc['结束时间']
+                        else:
+                            # 以最后一个事件的结束时间为pattern结束时间，并作为下一个P的开始时间
+                            end_time_patn = the_car_data.iloc[m].loc['结束时间']
+                            m += 1
+                            event_gap += 1
+                            break
                     start_time = end_time_patn
-                pattern = the_car_data.iloc[m-event_gap:m, -1]
-                duration = cal_timeduration(start_time_c, end_time_patn)
-                all_patterns = all_patterns.append({'车辆编号': cars,
-                                                    '开始时间': start_time_c,
-                                                    '结束时间': end_time_patn,
-                                                    '持续时间': duration,
-                                                    'pattern': ''.join(pattern.tolist())}, ignore_index=True)
+                    pattern = the_car_data.iloc[m-event_gap:m, -1]
+                    duration = cal_timeduration(start_time_c, end_time_patn)
+                    all_patterns = all_patterns.append({'车辆编号': cars,
+                                                        '开始时间': start_time_c,
+                                                        '结束时间': end_time_patn,
+                                                        '持续时间': duration,
+                                                        'pattern': ''.join(pattern.tolist())}, ignore_index=True)
+                else:
+                    start_time = end_time_patn
+                    duration = cal_timeduration(start_time_c, end_time_patn)
+                    all_patterns = all_patterns.append({'车辆编号': cars,
+                                                        '开始时间': start_time_c,
+                                                        '结束时间': end_time_patn,
+                                                        '持续时间': duration,
+                                                        'pattern': ''}, ignore_index=True)
                 print(m)
 
 
