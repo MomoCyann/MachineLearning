@@ -7,7 +7,7 @@ import datetime
 from math import sqrt,pow,acos
 from pandas.core.frame import DataFrame
 
-# TODO 持续2秒只有一个加速度，所以标准差为空 2、加入最大最小速度指标
+# TODO 持续2秒只有一个加速度，所以标准差为空 清除掉在转向时间内的加速减速事件；添加jerk
 
 
 '''
@@ -16,9 +16,6 @@ from pandas.core.frame import DataFrame
 序号 事件类型 采集时间 存储时间 持续时间 结束时间 风险等级 然后各特征向量
 
 pattern的做法是 根据事件间隔 遍历所有事件  间隔内的就进入一个列表 这样就是按顺序的了
-
-先提取出事件
-再给标签100个训练
 
 按间隔生成pattern
 做lda
@@ -42,6 +39,11 @@ def cal_accel(i, spdobj, cltobj):
     v2 = spdobj[i]
     return ((v2 - v1) / 3.6) / time_dura
 
+def get_timeduration(i, cltobj):
+    t1 = cltobj[i - 1]
+    t2 = cltobj[i]
+    time_dura = cal_timeduration(t1, t2)
+    return time_dura
 
 def cal_angle(i, lgtobj, latobj):
     x1 = lgtobj.iloc[i-1]
@@ -66,6 +68,11 @@ def cal_angle(i, lgtobj, latobj):
     angle = (acos(cos) / pi) * 180
     return angle
 
+def cal_jerk(i, accelsave, timeduration):
+    a1 = accelsave[i]
+    a2 = accelsave[i+1]
+    time = timeduration[i+1]
+    return (a2-a1)/time
 
 class EVENT:
 
@@ -94,11 +101,17 @@ class EVENT:
         self.amea = []
         self.ahead = []
         self.type = []
+        self.jerk = []
+        self.jmea = []
+        self.jmax = []
+        self.jmin = []
+        self.jstd = []
+        self.jhead = []
+        self.jdif = []
 
         self.accelsave = []
+        self.timeduration = []
         self.spdsave = []
-        self.spdsave_pure = []
-        #不考虑相同速度记录，为了算临界速度
 
     def clearevent(self):
         self.start.clear()
@@ -117,6 +130,13 @@ class EVENT:
         self.amea.clear()
         self.ahead.clear()
         self.type.clear()
+        self.jerk.clear()
+        self.jmea.clear()
+        self.jmax.clear()
+        self.jmin.clear()
+        self.jstd.clear()
+        self.jhead.clear()
+        self.jdif.clear()
 
     def accel_eventresult(self, start, end):
         # 加速结束 结算各项指标
@@ -134,8 +154,6 @@ class EVENT:
         # 速度均值
         self.spdmea.append(np.mean(self.spdsave))
 
-        # 加速度取绝对值
-        # absolute_a = np.maximum(np.array(self.accelsave), -np.array(self.accelsave))
         # 最大加速度
         amax = max(self.accelsave)
         # 达到最大加速度时的速度
@@ -160,9 +178,37 @@ class EVENT:
         # 首尾加速度和
         self.ahead.append(self.accelsave[0] + self.accelsave[-1])
 
+        if len(self.accelsave)>1:
+            for i in range(len(self.accelsave)-1):
+                j = cal_jerk(i, self.accelsave, self.timeduration)
+                self.jerk.append(j)
+            # jerk均值
+            self.jmea.append(np.mean(self.jerk))
+            # jerk最大值最小值
+            jmax = max(self.jerk)
+            jmin = min(self.jerk)
+            self.jmax.append(jmax)
+            self.jmin.append(jmin)
+            self.jdif.append(jmax - jmin)
+            # jerk标准差
+            if np.std(self.jerk, ddof=1) != np.std(self.jerk, ddof=1):
+                self.jstd.append(0)
+            else:
+                self.jstd.append(np.std(self.jerk, ddof=1))
+            # 首尾加速度和
+            self.jhead.append(self.jerk[0] + self.jerk[-1])
+        else:
+            self.jmea.append(0)
+            self.jmax.append(0)
+            self.jmin.append(0)
+            self.jdif.append(0)
+            self.jstd.append(0)
+            self.jhead.append(0)
+
+        self.timeduration.clear()
         self.spdsave.clear()
-        self.spdsave_pure.clear()
         self.accelsave.clear()
+        self.jerk.clear()
 
     def brake_eventresult(self, start, end):
         # 刹车结束 结算各项指标
@@ -208,9 +254,37 @@ class EVENT:
         #self.ahead.append(self.accelsave[0] + self.accelsave[-1])
         self.ahead.append(absolute_a[0] + absolute_a[-1])
 
+        if len(absolute_a)>1:
+            for i in range(len(absolute_a)-1):
+                j = cal_jerk(i, absolute_a, self.timeduration)
+                self.jerk.append(j)
+            # jerk均值
+            self.jmea.append(np.mean(self.jerk))
+            # jerk最大值最小值
+            jmax = max(self.jerk)
+            jmin = min(self.jerk)
+            self.jmax.append(jmax)
+            self.jmin.append(jmin)
+            self.jdif.append(jmax - jmin)
+            # jerk标准差
+            if np.std(self.jerk, ddof=1) != np.std(self.jerk, ddof=1):
+                self.jstd.append(0)
+            else:
+                self.jstd.append(np.std(self.jerk, ddof=1))
+            # 首尾加速度和
+            self.jhead.append(self.jerk[0] + self.jerk[-1])
+        else:
+            self.jmea.append(0)
+            self.jmax.append(0)
+            self.jmin.append(0)
+            self.jdif.append(0)
+            self.jstd.append(0)
+            self.jhead.append(0)
+
         self.spdsave.clear()
-        self.spdsave_pure.clear()
+        self.jerk.clear()
         self.accelsave.clear()
+        self.timeduration.clear()
 
     def turn_eventresult(self, start, end):
         # 转弯结束 结算各项指标
@@ -258,38 +332,65 @@ class EVENT:
         # 首尾加速度和
         self.ahead.append(absolute_a[0] + absolute_a[-1])
 
-        self.spdsave.clear()
-        self.spdsave_pure.clear()
-        self.accelsave.clear()
+        if len(absolute_a)>1:
+            for i in range(len(absolute_a)-1):
+                j = cal_jerk(i, absolute_a, self.timeduration)
+                self.jerk.append(j)
+            # jerk均值
+            self.jmea.append(np.mean(self.jerk))
+            # jerk最大值最小值
+            jmax = max(self.jerk)
+            jmin = min(self.jerk)
+            self.jmax.append(jmax)
+            self.jmin.append(jmin)
+            self.jdif.append(jmax - jmin)
+            # jerk标准差
+            if np.std(self.jerk, ddof=1) != np.std(self.jerk, ddof=1):
+                self.jstd.append(0)
+            else:
+                self.jstd.append(np.std(self.jerk, ddof=1))
+            # 首尾加速度和
+            self.jhead.append(self.jerk[0] + self.jerk[-1])
+        else:
+            self.jmea.append(0)
+            self.jmax.append(0)
+            self.jmin.append(0)
+            self.jdif.append(0)
+            self.jstd.append(0)
+            self.jhead.append(0)
 
-    def get_a(self):
-        df = pd.read_csv(
-            self.datasetpath + "031267" + '/' + str(self.day) + self.filename_extenstion,
-            encoding='gbk')
-        df.rename(columns={u'脉冲车速(km/h)': 'spd', u'刹车': 'brk', u'采集时间': 'clt', u'存储时间': 'svt',
-                           u'左转向灯': 'lef', u'右转向灯': 'rgt'},
-                  inplace=True)
-        spdobj = df['spd']
-        cltobj = df['clt']
-        time = []
-        all_a = []
-        for i in range(len(spdobj)):
-            if i == 0:
-                continue
-            delta_v = (spdobj[i] - spdobj[i - 1]) / 3.6  # m/s
-            delta_t = cal_timeduration(cltobj[i - 1], cltobj[i])
-            a = delta_v / delta_t
-            all_a.append(a)
-            time.append(cltobj[i - 1])
-        dic = {
-            'start': time,
-            'a': all_a
-        }
-        data = DataFrame(dic)
-        data.sort_values(by='start', inplace=True)
-        data_new = data.reset_index(drop=True)
-        data_new.to_csv(self.eventpath + "031267" + '/' + str(self.day) + 'a' + self.filename_extenstion,
-                        encoding='gbk')
+        self.spdsave.clear()
+        self.timeduration.clear()
+        self.accelsave.clear()
+        self.jerk.clear()
+    # def get_a(self):
+    #     df = pd.read_csv(
+    #         self.datasetpath + "031267" + '/' + str(self.day) + self.filename_extenstion,
+    #         encoding='gbk')
+    #     df.rename(columns={u'脉冲车速(km/h)': 'spd', u'刹车': 'brk', u'采集时间': 'clt', u'存储时间': 'svt',
+    #                        u'左转向灯': 'lef', u'右转向灯': 'rgt'},
+    #               inplace=True)
+    #     spdobj = df['spd']
+    #     cltobj = df['clt']
+    #     time = []
+    #     all_a = []
+    #     for i in range(len(spdobj)):
+    #         if i == 0:
+    #             continue
+    #         delta_v = (spdobj[i] - spdobj[i - 1]) / 3.6  # m/s
+    #         delta_t = cal_timeduration(cltobj[i - 1], cltobj[i])
+    #         a = delta_v / delta_t
+    #         all_a.append(a)
+    #         time.append(cltobj[i - 1])
+    #     dic = {
+    #         'start': time,
+    #         'a': all_a
+    #     }
+    #     data = DataFrame(dic)
+    #     data.sort_values(by='start', inplace=True)
+    #     data_new = data.reset_index(drop=True)
+    #     data_new.to_csv(self.eventpath + "031267" + '/' + str(self.day) + 'a' + self.filename_extenstion,
+    #                     encoding='gbk')
 
     def accel_event(self, spdobj, cltobj):
         # 事件：采集时间，结束时间，持续时间，速度差，速度标准差，速度均值
@@ -307,12 +408,13 @@ class EVENT:
                     # 记录加速开始时间
                     start = cltobj[i-1]
                     self.spdsave.append(spdobj[i-1])
-                    #self.spdsave_pure.append(spdobj[i])
 
                 a = cal_accel(i, spdobj, cltobj)
+                t = get_timeduration(i, cltobj)
+
+                self.timeduration.append(t)
                 self.accelsave.append(a)
                 self.spdsave.append(spdobj[i])
-                #self.spdsave_pure.append(spdobj[i])
 
             # # 速度相同的时候 只录入速度
             # if spdobj[i] == spdobj[i-1]:
@@ -348,6 +450,9 @@ class EVENT:
             # 刹车中
             else:
                 a = cal_accel(i, spdobj, cltobj)
+                t = get_timeduration(i, cltobj)
+
+                self.timeduration.append(t)
                 self.accelsave.append(a)
                 self.spdsave.append(spdobj[i])
 
@@ -360,60 +465,60 @@ class EVENT:
                     self.type.append('brake')
 
 
-    def turn_event(self, spdobj, cltobj, lefobj, rgtobj):
-        for i in range(len(lefobj)):
-            if i == 0:
-                isturning = False
-                continue
-
-            if not isturning:
-                if lefobj[i] == 1 and rgtobj[i] != lefobj[i]:
-                    start = cltobj[i]
-                    self.spdsave.append(spdobj[i])
-                    isturning = True
-                    continue
-                else:
-                    continue
-            # 转弯亮灯中
-            else:
-                a = cal_accel(i, spdobj, cltobj)
-                self.accelsave.append(a)
-                self.spdsave.append(spdobj[i])
-                if lefobj[i] == 0:
-                    end = cltobj[i]
-                    isturning = False
-                    self.eventresult(start, end)
-                    # 事件类型
-                    self.type.append('左转')
-                    self.spdsave.clear()
-                    self.accelsave.clear()
-
-        for i in range(len(rgtobj)):
-            if i == 0:
-                isturning = False
-                continue
-
-            if not isturning:
-                if rgtobj[i] == 1 and rgtobj[i] != lefobj[i]:
-                    start = cltobj[i]
-                    self.spdsave.append(spdobj[i])
-                    isturning = True
-                    continue
-                else:
-                    continue
-            # 转弯亮灯中
-            else:
-                a = cal_accel(i, spdobj, cltobj)
-                self.accelsave.append(a)
-                self.spdsave.append(spdobj[i])
-                if rgtobj[i] == 0:
-                    end = cltobj[i]
-                    isturning = False
-                    self.eventresult(start, end)
-                    # 事件类型
-                    self.type.append('右转')
-                    self.spdsave.clear()
-                    self.accelsave.clear()
+    # def turn_event(self, spdobj, cltobj, lefobj, rgtobj):
+    #     for i in range(len(lefobj)):
+    #         if i == 0:
+    #             isturning = False
+    #             continue
+    #
+    #         if not isturning:
+    #             if lefobj[i] == 1 and rgtobj[i] != lefobj[i]:
+    #                 start = cltobj[i]
+    #                 self.spdsave.append(spdobj[i])
+    #                 isturning = True
+    #                 continue
+    #             else:
+    #                 continue
+    #         # 转弯亮灯中
+    #         else:
+    #             a = cal_accel(i, spdobj, cltobj)
+    #             self.accelsave.append(a)
+    #             self.spdsave.append(spdobj[i])
+    #             if lefobj[i] == 0:
+    #                 end = cltobj[i]
+    #                 isturning = False
+    #                 self.eventresult(start, end)
+    #                 # 事件类型
+    #                 self.type.append('左转')
+    #                 self.spdsave.clear()
+    #                 self.accelsave.clear()
+    #
+    #     for i in range(len(rgtobj)):
+    #         if i == 0:
+    #             isturning = False
+    #             continue
+    #
+    #         if not isturning:
+    #             if rgtobj[i] == 1 and rgtobj[i] != lefobj[i]:
+    #                 start = cltobj[i]
+    #                 self.spdsave.append(spdobj[i])
+    #                 isturning = True
+    #                 continue
+    #             else:
+    #                 continue
+    #         # 转弯亮灯中
+    #         else:
+    #             a = cal_accel(i, spdobj, cltobj)
+    #             self.accelsave.append(a)
+    #             self.spdsave.append(spdobj[i])
+    #             if rgtobj[i] == 0:
+    #                 end = cltobj[i]
+    #                 isturning = False
+    #                 self.eventresult(start, end)
+    #                 # 事件类型
+    #                 self.type.append('右转')
+    #                 self.spdsave.clear()
+    #                 self.accelsave.clear()
 
     def turn_event_gps(self, spdobj, cltobj, lgtobj, latobj):
         lgtobj = lgtobj.dropna()
@@ -441,6 +546,9 @@ class EVENT:
                             self.spdsave.append(spdobj[j])
                         self.spdsave.append(spdobj[j])
                         a = cal_accel(j, spdobj, cltobj)
+                        t = get_timeduration(i, cltobj)
+
+                        self.timeduration.append(t)
                         self.accelsave.append(a)
 
                 # isturning = True
@@ -449,6 +557,9 @@ class EVENT:
                         self.spdsave.append(spdobj[k])
                     self.spdsave.append(spdobj[k])
                     a = cal_accel(k, spdobj, cltobj)
+                    t = get_timeduration(i, cltobj)
+
+                    self.timeduration.append(t)
                     self.accelsave.append(a)
 
             if angle < 45:
@@ -460,6 +571,9 @@ class EVENT:
                             self.spdsave.append(spdobj[l])
                         self.spdsave.append(spdobj[l])
                         a = cal_accel(l, spdobj, cltobj)
+                        t = get_timeduration(i, cltobj)
+
+                        self.timeduration.append(t)
                         self.accelsave.append(a)
 
                     self.turn_eventresult(start, end)
@@ -520,7 +634,14 @@ class EVENT:
                         '加速度标准差': self.astd,
                         '加速度均值': self.amea,
                         '首尾加速度和': self.ahead,
+                        '加加速度最大值': self.jmax,
+                        '加加速度最小值': self.jmin,
+                        '加加速度极差': self.jdif,
+                        '加加速度标准差': self.jstd,
+                        '加加速度均值': self.jmea,
+                        '加加速度首尾和': self.jhead,
                         '事件类型': self.type
+
                     }
                     data = DataFrame(dic)
                     data.sort_values(by='开始时间', inplace=True)
