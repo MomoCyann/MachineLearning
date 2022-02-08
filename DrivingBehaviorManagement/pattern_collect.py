@@ -88,6 +88,8 @@ class PATTERNCOLLECT:
                             end_time_patn = the_car_data.iloc[m].loc['结束时间']
                             m += 1
                             event_gap += 1
+                            if m >= the_car_data.shape[0]:
+                                break
                             event_type = the_car_data.iloc[m].loc['pattern_label']
                             break
                     start_time = end_time_patn
