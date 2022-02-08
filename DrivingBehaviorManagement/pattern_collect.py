@@ -71,7 +71,7 @@ class PATTERNCOLLECT:
                     #表示这段时间是有事件的
                     while start_time < end_time_patn:
                         # 高风险事件的时间。
-                        if event_type == 'o' or event_type == 'p' or event_type == 'q':
+                        if event_type == 'c' or event_type == 'j' or event_type == 'q':
                             time_highrisk += the_car_data.iloc[m].loc['持续时间']
 
                         if end_time_event <= end_time_patn:
