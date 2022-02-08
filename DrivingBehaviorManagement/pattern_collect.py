@@ -60,17 +60,24 @@ class PATTERNCOLLECT:
             start_time = the_car_data.iloc[m].loc['开始时间']
             end_time_event = the_car_data.iloc[m].loc['结束时间']
             end_time = the_car_data.iloc[-1].loc['开始时间']
-
+            event_type = the_car_data.iloc[m].loc['pattern_label']
             while m < the_car_data.shape[0]:
+
                 start_time_c = start_time  # 复制一个starttime用作记录时间起点
                 event_gap = 0
                 end_time_patn = int(cal_nexttime(start_time, self.timegap))
+                time_highrisk = 0
                 if the_car_data.iloc[m].loc['开始时间'] < end_time_patn:
                     #表示这段时间是有事件的
                     while start_time < end_time_patn:
+                        # 高风险事件的时间。
+                        if event_type == 'o' or event_type == 'p' or event_type == 'q':
+                            time_highrisk += the_car_data.iloc[m].loc['持续时间']
+
                         if end_time_event <= end_time_patn:
                             m += 1
                             event_gap += 1
+                            event_type = the_car_data.iloc[m].loc['pattern_label']
                             if m >= the_car_data.shape[0]:
                                 break
                             else:
@@ -81,6 +88,7 @@ class PATTERNCOLLECT:
                             end_time_patn = the_car_data.iloc[m].loc['结束时间']
                             m += 1
                             event_gap += 1
+                            event_type = the_car_data.iloc[m].loc['pattern_label']
                             break
                     start_time = end_time_patn
                     pattern = the_car_data.iloc[m-event_gap:m, -1]
@@ -89,15 +97,17 @@ class PATTERNCOLLECT:
                                                         '开始时间': start_time_c,
                                                         '结束时间': end_time_patn,
                                                         '持续时间': duration,
+                                                        '高风险时间': time_highrisk,
                                                         'pattern': ''.join(pattern.tolist())}, ignore_index=True)
                 else:
                     start_time = end_time_patn
-                    duration = cal_timeduration(start_time_c, end_time_patn)
-                    all_patterns = all_patterns.append({'车辆编号': cars,
-                                                        '开始时间': start_time_c,
-                                                        '结束时间': end_time_patn,
-                                                        '持续时间': duration,
-                                                        'pattern': ''}, ignore_index=True)
+                    # duration = cal_timeduration(start_time_c, end_time_patn)
+                    # all_patterns = all_patterns.append({'车辆编号': cars,
+                    #                                     '开始时间': start_time_c,
+                    #                                     '结束时间': end_time_patn,
+                    #                                     '持续时间': duration,
+                    #                                     '高风险时间': time_highrisk,
+                    #                                     'pattern': ''}, ignore_index=True)
                 print(m)
 
 
