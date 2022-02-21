@@ -80,6 +80,7 @@ class FinalScore:
     def export_file(self):
         self.all_features.to_csv(self.root + 'all_features' + self.filename_extenstion,encoding='gbk')
 
+
 if __name__ == '__main__':
     finalscore = FinalScore()
     finalscore.filter()
