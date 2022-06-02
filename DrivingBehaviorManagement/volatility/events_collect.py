@@ -6,17 +6,18 @@ import numpy as np
 import datetime
 from math import sqrt,pow,acos
 from pandas.core.frame import DataFrame
-
+#这个代码是用来将所有的event合并为1个allevent文件的
 class EventArrange:
 
     def __init__(self):
-        self.folder_name = ["031267", "077102", "078351", "078837", "080913", "082529",
-                            "090798", "098840", "108140", "112839"]
+        self.folder_name = ["031267"]
+        # self.folder_name = ["031267", "077102", "078351", "078837", "080913", "082529",
+        #                     "090798", "098840", "108140", "112839"]
         self.filename_extenstion = '.csv'
-        self.root = "E:/wakeup/"
+        self.root = "E:/wakeup/volatility_data/"
         self.datasetpath = "E:/wakeup/dataset/"
         self.datapath = 'E:/wakeup/data/'
-        self.eventpath = "E:/wakeup/event/"
+        self.eventpath = "E:/wakeup/volatility_data/event/"
         self.day = 20200902
         self.first_csv_switch = False
 

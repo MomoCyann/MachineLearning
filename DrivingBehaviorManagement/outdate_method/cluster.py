@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 class Cluster:
 
     def __init__(self):
-        self.X = pd.read_csv("E:/wakeup/data_factors.csv", encoding='gbk')
+        self.X = pd.read_csv("E:/wakeup/abandoned/data_factors.csv", encoding='gbk')
         self.X = self.X.values
         # 定义数据集
 

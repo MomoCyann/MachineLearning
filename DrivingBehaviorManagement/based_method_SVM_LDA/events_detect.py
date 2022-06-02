@@ -4,10 +4,10 @@ import os
 import pandas as pd
 import numpy as np
 import datetime
-from math import sqrt,pow,acos
+from math import sqrt, pow, acos
 from pandas.core.frame import DataFrame
 
-# TODO 持续2秒只有一个加速度，所以标准差为空 清除掉在转向时间内的加速减速事件；添加jerk
+# TODO 修改油门踏板为加速判定
 
 
 '''
@@ -32,12 +32,13 @@ def cal_timeduration(start, end):
 
 
 def cal_accel(i, spdobj, cltobj):
-    t1 = cltobj[i-1]
+    t1 = cltobj[i - 1]
     t2 = cltobj[i]
     time_dura = cal_timeduration(t1, t2)
-    v1 = spdobj[i-1]
+    v1 = spdobj[i - 1]
     v2 = spdobj[i]
     return ((v2 - v1) / 3.6) / time_dura
+
 
 def get_timeduration(i, cltobj):
     t1 = cltobj[i - 1]
@@ -45,40 +46,45 @@ def get_timeduration(i, cltobj):
     time_dura = cal_timeduration(t1, t2)
     return time_dura
 
+
 def cal_angle(i, lgtobj, latobj):
-    x1 = lgtobj.iloc[i-1]
+    x1 = lgtobj.iloc[i - 1]
     x2 = lgtobj.iloc[i]
-    x3 = lgtobj.iloc[i+1]
-    y1 = latobj.iloc[i-1]
+    x3 = lgtobj.iloc[i + 1]
+    y1 = latobj.iloc[i - 1]
     y2 = latobj.iloc[i]
-    y3 = latobj.iloc[i+1]
-    #向量表示两段路程
-    vx1 = (x2 - x1) * 100000 #米
+    y3 = latobj.iloc[i + 1]
+    # 向量表示两段路程
+    vx1 = (x2 - x1) * 100000  # 米
     vy1 = (y2 - y1) * 100000 * 1.1
     vx2 = (x3 - x2) * 100000
     vy2 = (y3 - y2) * 100000 * 1.1
-    #求向量余弦值再转为角度
+    # 求向量余弦值再转为角度
     pi = 3.1415
     ab = vx1 * vx2 + vy1 * vy2
     mo = sqrt(pow(vx1, 2) + pow(vy1, 2)) * sqrt(pow(vx2, 2) + pow(vy2, 2))
     cos = ab * 1.0 / (mo * 1.0 + 1e-6)
-    if cos==0.0:
+    if cos == 0.0:
         return 0
 
     angle = (acos(cos) / pi) * 180
     return angle
 
+
 def cal_jerk(i, accelsave, timeduration):
     a1 = accelsave[i]
-    a2 = accelsave[i+1]
-    time = timeduration[i+1]
-    return (a2-a1)/time
+    a2 = accelsave[i + 1]
+    time = timeduration[i + 1]
+    return (a2 - a1) / time
+
 
 class EVENT:
 
     def __init__(self):
-        self.folder_name = ["031267", "077102", "078351", "078837", "080913", "082529",
-                            "090798", "098840", "108140", "112839"]
+        self.folder_name = [#"031267",
+                            "077102", "078351", "078837", "080913", "082529",
+                            "090798", "098840", "108140",]
+                            #"112839"]
         self.filename_extenstion = '.csv'
         self.datasetpath = "E:/wakeup/dataset/"
         self.datapath = 'E:/wakeup/data/'
@@ -158,7 +164,7 @@ class EVENT:
         amax = max(self.accelsave)
         # 达到最大加速度时的速度
         tar = self.accelsave.index(max(self.accelsave))
-        crtspd = (self.spdsave[tar] + self.spdsave[tar+1]) / 2
+        crtspd = (self.spdsave[tar] + self.spdsave[tar + 1]) / 2
         self.spdcrt.append(crtspd)
         amin = min(self.accelsave)
         # amax = max(self.accelsave)
@@ -178,8 +184,8 @@ class EVENT:
         # 首尾加速度和
         self.ahead.append(self.accelsave[0] + self.accelsave[-1])
 
-        if len(self.accelsave)>1:
-            for i in range(len(self.accelsave)-1):
+        if len(self.accelsave) > 1:
+            for i in range(len(self.accelsave) - 1):
                 j = cal_jerk(i, self.accelsave, self.timeduration)
                 self.jerk.append(j)
             # jerk均值
@@ -251,11 +257,11 @@ class EVENT:
         # 加速度均值
         self.amea.append(np.mean(absolute_a))
         # 首尾加速度和
-        #self.ahead.append(self.accelsave[0] + self.accelsave[-1])
+        # self.ahead.append(self.accelsave[0] + self.accelsave[-1])
         self.ahead.append(absolute_a[0] + absolute_a[-1])
 
-        if len(absolute_a)>1:
-            for i in range(len(absolute_a)-1):
+        if len(absolute_a) > 1:
+            for i in range(len(absolute_a) - 1):
                 j = cal_jerk(i, absolute_a, self.timeduration)
                 self.jerk.append(j)
             # jerk均值
@@ -332,8 +338,8 @@ class EVENT:
         # 首尾加速度和
         self.ahead.append(absolute_a[0] + absolute_a[-1])
 
-        if len(absolute_a)>1:
-            for i in range(len(absolute_a)-1):
+        if len(absolute_a) > 1:
+            for i in range(len(absolute_a) - 1):
                 j = cal_jerk(i, absolute_a, self.timeduration)
                 self.jerk.append(j)
             # jerk均值
@@ -363,6 +369,7 @@ class EVENT:
         self.timeduration.clear()
         self.accelsave.clear()
         self.jerk.clear()
+
     # def get_a(self):
     #     df = pd.read_csv(
     #         self.datasetpath + "031267" + '/' + str(self.day) + self.filename_extenstion,
@@ -392,17 +399,18 @@ class EVENT:
     #     data_new.to_csv(self.eventpath + "031267" + '/' + str(self.day) + 'a' + self.filename_extenstion,
     #                     encoding='gbk')
 
-    def accel_event(self, spdobj, cltobj):
+    def accel_event(self, trgobj, spdobj, cltobj):
         # 事件：采集时间，结束时间，持续时间，速度差，速度标准差，速度均值
         # 最大加速度，最小加速度，加速度差，加速度标准差，加速度均值，首尾加速度和
-        for i in range(len(spdobj)):
+        # 5/23 将指针指向转速。
+        for i in range(len(trgobj)):
             # 初始化标记
             if i == 0:
                 isacceling = False
                 continue
 
             # 加速事件开始
-            if spdobj[i] > spdobj[i-1]:
+            if trgobj[i] >= 20:
                 if not isacceling:
                     isacceling = True
                     # 记录加速开始时间
@@ -421,9 +429,9 @@ class EVENT:
             #     self.spdsave.append(spdobj[i])
 
             # 加速事件停止条件的判定
-            if spdobj[i] <= spdobj[i-1] or i == len(spdobj): #最后一个强制结束
+            if trgobj[i] < 20 or i == len(trgobj):  # 最后一个强制结束
                 if isacceling:
-                    end = cltobj[i-1]
+                    end = cltobj[i - 1]
                     isacceling = False
                     self.accel_eventresult(start, end)
                     # 事件类型
@@ -431,7 +439,7 @@ class EVENT:
                 else:
                     continue
 
-    def brake_event(self, spdobj, cltobj, brkobj):
+    def brake_event(self, spdobj, cltobj, brkobj, trgobj):
         for i in range(len(brkobj)):
             # init
             if i == 0:
@@ -457,13 +465,12 @@ class EVENT:
                 self.spdsave.append(spdobj[i])
 
                 # 停止条件判定; 速度增加的时候也视为刹车停止
-                if brkobj[i] == 0 or spdobj[i] < spdobj[i-1]:
+                if brkobj[i] == 0 or trgobj[i-1] < trgobj[i]:
                     end = cltobj[i]
                     isbraking = False
                     self.brake_eventresult(start, end)
                     # 事件类型
                     self.type.append('brake')
-
 
     # def turn_event(self, spdobj, cltobj, lefobj, rgtobj):
     #     for i in range(len(lefobj)):
@@ -527,22 +534,24 @@ class EVENT:
         # print(lgtobj.index[0]) #第一个位置的索引
         for i in range(len(lgtobj)):
             # 初始化标记
-            if i == 0:
+            if i == 0 or i == 1:
+                # 不能等于1的原因：若在第二行 是作为中心点，那么第一行为起点，起点的速度要计算加速度，会再用到上一行的速度，第一行的上一行就没有了，
+                # 就会报错
                 isturning = False
                 continue
-            #最后一个点是算不了角度的，直接结束。
+            # 最后一个点是算不了角度的，直接结束。
             if i == len(lgtobj) - 1:
                 continue
 
-            #计算角度 需要3个点，遍历的i是中间的那个点，所以计算转弯起点是前一个点。转弯的加速度可能有减有加，算数学指标的时候记得区分。
+            # 计算角度 需要3个点，遍历的i是中间的那个点，所以计算转弯起点是前一个点。转弯的加速度可能有减有加，算数学指标的时候记得区分。
             angle = cal_angle(i, lgtobj, latobj)
             if angle > 45:
                 if not isturning:
                     isturning = True
-                    start = cltobj[lgtobj.index[i-1]]
-                    #因为gps数据有间隔，录入速度要把两个间隔之内的速度都录入
-                    for j in range(lgtobj.index[i-1],lgtobj.index[i]):
-                        if j == lgtobj.index[i-1]:
+                    start = cltobj[lgtobj.index[i - 1]]
+                    # 因为gps数据有间隔，录入速度要把两个间隔之内的速度都录入
+                    for j in range(lgtobj.index[i - 1], lgtobj.index[i]):
+                        if j == lgtobj.index[i - 1]:
                             self.spdsave.append(spdobj[j])
                         self.spdsave.append(spdobj[j])
                         a = cal_accel(j, spdobj, cltobj)
@@ -580,7 +589,6 @@ class EVENT:
                     # 事件类型
                     self.type.append('turn')
 
-
     def eventprocess(self):
         # 创建目录
         for folder in self.folder_name:
@@ -598,25 +606,24 @@ class EVENT:
                     df = pd.read_csv(
                         self.datasetpath + folder + '/' + str(self.day) + self.filename_extenstion,
                         encoding='gbk')
-                    df.rename(columns={u'脉冲车速(km/h)': 'spd', u'刹车': 'brk', u'采集时间': 'clt', u'存储时间': 'svt',
-                                       u'左转向灯': 'lef', u'右转向灯': 'rgt', u'经度': 'lgt', u'纬度': 'lat'},
+                    df.rename(columns={u'油门踏板开度(%)': 'trg', u'脉冲车速(km/h)': 'spd', u'刹车': 'brk', u'采集时间': 'clt',
+                                       u'经度': 'lgt', u'纬度': 'lat'},
                               inplace=True)
+                    trgobj = df['trg']
                     spdobj = df['spd']
                     cltobj = df['clt']
                     brkobj = df['brk']
-                    lefobj = df['lef']
-                    rgtobj = df['rgt']
                     lgtobj = df['lgt']
                     latobj = df['lat']
                     # # 列名占了一行 数据列从2开始
                     # # df['spd'][1] = spdobj[0]
                     # print(spdobj[0])
-                    self.accel_event(spdobj, cltobj)
-                    self.brake_event(spdobj, cltobj, brkobj)
+                    self.accel_event(trgobj, spdobj, cltobj)
+                    self.brake_event(spdobj, cltobj, brkobj, trgobj)
                     # self.turn_event(spdobj, cltobj, lefobj, rgtobj)
                     self.turn_event_gps(spdobj, cltobj, lgtobj, latobj)
 
-                    #有些事件只有一个加速度，求标准差则是空值。
+                    # 有些事件只有一个加速度，求标准差则是空值。
                     dic = {
                         '车辆编号': folder,
                         '开始时间': self.start,
@@ -659,9 +666,7 @@ class EVENT:
 
 if __name__ == '__main__':
     eventdetection = EVENT()
-    #eventdetection.get_a()
+    # eventdetection.get_a()
     eventdetection.eventprocess()
     print('提取完毕')
     print('提取完毕!!!')
-
-
