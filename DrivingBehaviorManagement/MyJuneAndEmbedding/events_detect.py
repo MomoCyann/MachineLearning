@@ -87,7 +87,7 @@ class EVENT:
         self.filename_extenstion = '.csv'
         self.datasetpath = "E:/wakeup/dataset/"
         self.datapath = 'E:/wakeup/data/'
-        self.eventpath = "E:/wakeup/volatility_data/event/"
+        self.eventpath = "E:/wakeup/MyJuneAndEmbedding/event/"
         self.day = 20200901
 
         self.start = []

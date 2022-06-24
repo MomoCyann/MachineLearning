@@ -10,10 +10,10 @@ from sklearn.mixture import GaussianMixture
 from matplotlib import pyplot as plt
 
 
-root = "E:/wakeup/volatility_data/"
-datasetpath = "E:/wakeup/volatility_data/dataset/"
-datapath = 'E:/wakeup/volatility_data/data/'
-eventpath = "E:/wakeup/volatility_data/event/"
+root = "E:/wakeup/MyJuneAndEmbedding/"
+datasetpath = "E:/wakeup/MyJuneAndEmbedding/dataset/"
+datapath = 'E:/wakeup/MyJuneAndEmbedding/data/'
+eventpath = "E:/wakeup/MyJuneAndEmbedding/event/"
 # data = pd.read_csv(root + 'allevents.csv', encoding='gbk')
 data = pd.read_csv(root + 'allevents_washed.csv', encoding='gbk')
 print("删除前")

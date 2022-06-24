@@ -8,7 +8,6 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.base import clone
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils import shuffle
-
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier

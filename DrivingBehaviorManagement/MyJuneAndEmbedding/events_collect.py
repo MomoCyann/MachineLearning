@@ -14,10 +14,10 @@ class EventArrange:
         # self.folder_name = ["031267", "077102", "078351", "078837", "080913", "082529",
         #                     "090798", "098840", "108140", "112839"]
         self.filename_extenstion = '.csv'
-        self.root = "E:/wakeup/volatility_data/"
+        self.root = "E:/wakeup/MyJuneAndEmbedding/"
         self.datasetpath = "E:/wakeup/dataset/"
         self.datapath = 'E:/wakeup/data/'
-        self.eventpath = "E:/wakeup/volatility_data/event/"
+        self.eventpath = "E:/wakeup/MyJuneAndEmbedding/event/"
         self.day = 20200902
         self.first_csv_switch = False
 
