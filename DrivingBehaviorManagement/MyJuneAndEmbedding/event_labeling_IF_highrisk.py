@@ -10,7 +10,7 @@ from sklearn.mixture import GaussianMixture
 from matplotlib import pyplot as plt
 # from pycluster import KMedoids
 plt.rcParams['font.family'] = 'simhei'
-root = "D:/RX-105/wakeup/MyJuneAndEmbedding/"
+root = "D:/RX-105/wakeup/MyJuneAndEmbedding/8car/"
 datasetpath = "D:/RX-105/wakeup/MyJuneAndEmbedding/dataset/"
 datapath = 'D:/RX-105/wakeup/MyJuneAndEmbedding/data/'
 eventpath = "D:/RX-105/wakeup/MyJuneAndEmbedding/event/"
@@ -144,7 +144,7 @@ X_tsne = tsne.fit_transform(data)
 # # # X_tsne_turn = tsne.fit_transform(data_turn)
 # # #plot_embedding_2d(X_tsne[:,0:2],"t-SNE 2D")
 # 3d图
-plot_embedding_3d(X_tsne,"t-SNE 3D (time %.2fs)" %(time() - t0))
+#plot_embedding_3d(X_tsne,"t-SNE 3D (time %.2fs)" %(time() - t0))
 # #plot_embedding_3d(X_tsne_accel,data_merge_accel,"t-SNE 3D (time %.2fs)" %(time() - t0))
 # #plot_embedding_3d(X_tsne_brake,data_merge_brake,"t-SNE 3D (time %.2fs)" %(time() - t0))
 # plot_embedding_3d(X_tsne_turn,data_merge_turn,"t-SNE 3D (time %.2fs)" %(time() - t0))

@@ -10,15 +10,15 @@ from sklearn.mixture import GaussianMixture
 from matplotlib import pyplot as plt
 
 
-root = "E:/wakeup/"
-datasetpath = "E:/wakeup/dataset/"
-datapath = 'E:/wakeup/data/'
-eventpath = "E:/wakeup/event/"
+root = "D:/RX-105/wakeup/MyJuneAndEmbedding/8car/"
+datasetpath = "D:/RX-105/wakeup/dataset/"
+datapath = 'D:/RX-105/wakeup/data/'
+eventpath = "D:/RX-105/wakeup/MyJuneAndEmbedding/event/"
 # data = pd.read_csv(root + 'allevents.csv', encoding='gbk')
 data = pd.read_csv(root + 'allevents.csv', encoding='gbk')
 print("删除前")
 print(data.shape[0])
-# # 删除持续时间123的短行为
+# 删除持续时间123的短行为
 # data.drop(index=data[data['持续时间'].isin([1,2,3])].index,inplace=True)
 # print("删除持续时间123的短行为")
 # print(data.shape[0])

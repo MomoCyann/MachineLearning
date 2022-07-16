@@ -81,13 +81,13 @@ def cal_jerk(i, accelsave, timeduration):
 class EVENT:
 
     def __init__(self):
-        self.folder_name = ["077102"]
-        # self.folder_name = ["031267", "077102", "078351", "078837", "080913", "082529",
-        #                     "090798", "098840", "108140", "112839"]
+        # self.folder_name = ["077102"]
+        self.folder_name = ["077102", "078351", "078837", "080913", "082529",
+                            "090798", "098840", "108140", "112839"]
         self.filename_extenstion = '.csv'
-        self.datasetpath = "E:/wakeup/dataset/"
-        self.datapath = 'E:/wakeup/data/'
-        self.eventpath = "E:/wakeup/MyJuneAndEmbedding/event/"
+        self.datasetpath = "D:/RX-105/wakeup/dataset/"
+        self.datapath = 'D:/RX-105/wakeup/data/'
+        self.eventpath = "D:/RX-105/wakeup/MyJuneAndEmbedding/event/"
         self.day = 20200901
 
         self.start = []
@@ -665,9 +665,13 @@ class EVENT:
         # print(lgtobj.iloc[0]) #第一个值
         # print(lgtobj.index[0]) #第一个位置的索引
         for i in range(len(lgtobj)):
+            # 因为data_set处理的时候 有时间间隔一个小时的几行数据在最前面，GPS发生了变动，会被判定为转弯，但这时候速度根本没有，
+            # 计算的时候会obj对象会索引到-1报错
             # 初始化标记
             if i == 0:
                 isturning = False
+                continue
+            if i == 1:
                 continue
             # 最后一个点是算不了角度的，直接结束。
             if i == len(lgtobj) - 1:

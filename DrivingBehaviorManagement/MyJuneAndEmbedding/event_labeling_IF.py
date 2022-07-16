@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.mixture import GaussianMixture
 from matplotlib import pyplot as plt
 plt.rcParams['font.family'] = 'simhei'
-root = "D:/RX-105/wakeup/MyJuneAndEmbedding/"
+root = "D:/RX-105/wakeup/MyJuneAndEmbedding/8car/"
 datasetpath = "D:/RX-105/wakeup/MyJuneAndEmbedding/dataset/"
 datapath = 'D:/RX-105/wakeup/MyJuneAndEmbedding/data/'
 eventpath = "D:/RX-105/wakeup/MyJuneAndEmbedding/event/"
@@ -150,13 +150,13 @@ print("Computing t-SNE embedding")
 # #plot_embedding_3d(X_tsne_brake,data_merge_brake,"t-SNE 3D (time %.2fs)" %(time() - t0))
 # plot_embedding_3d(X_tsne_turn,data_merge_turn,"t-SNE 3D (time %.2fs)" %(time() - t0))
 
-# data_merge.drop('Unnamed: 0', axis=1, inplace=True)
+data_merge.drop('Unnamed: 0', axis=1, inplace=True)
 # data_merge_accel.drop('Unnamed: 0', axis=1, inplace=True)
 # data_merge_brake.drop('Unnamed: 0', axis=1, inplace=True)
 # data_merge_turn.drop('Unnamed: 0', axis=1, inplace=True)
 
-# data_merge.to_csv(root + 'allevents_washed_outlier.csv',
-#                    encoding='gbk')
+data_merge.to_csv(root + 'allevents_washed_outlier.csv',
+                   encoding='gbk')
 # data_merge_accel.to_csv(root + 'allevents_washed_outlier_accel.csv',
 #                    encoding='gbk')
 # data_merge_brake.to_csv(root + 'allevents_washed_outlier_brake.csv',

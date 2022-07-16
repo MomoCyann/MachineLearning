@@ -10,15 +10,15 @@ from pandas.core.frame import DataFrame
 class EventArrange:
 
     def __init__(self):
-        self.folder_name = ["031267"]
-        # self.folder_name = ["031267", "077102", "078351", "078837", "080913", "082529",
-        #                     "090798", "098840", "108140", "112839"]
+        # self.folder_name = ["031267"]
+        self.folder_name = ["077102", "078351", "078837", "080913", "082529",
+                            "090798", "098840", "108140"]
         self.filename_extenstion = '.csv'
-        self.root = "E:/wakeup/MyJuneAndEmbedding/"
-        self.datasetpath = "E:/wakeup/dataset/"
-        self.datapath = 'E:/wakeup/data/'
-        self.eventpath = "E:/wakeup/MyJuneAndEmbedding/event/"
-        self.day = 20200902
+        self.root = "D:/RX-105/wakeup/MyJuneAndEmbedding/8car/"
+        self.datasetpath = "D:/RX-105/wakeup/dataset/"
+        self.datapath = 'D:/RX-105/wakeup/data/'
+        self.eventpath = "D:/RX-105/wakeup/MyJuneAndEmbedding/event/"
+        self.day = 20200901
         self.first_csv_switch = False
 
     def event_collection(self):
@@ -34,7 +34,7 @@ class EventArrange:
             while self.day < 20200931:
                 if not self.first_csv_switch:
                     df1 = pd.read_csv(
-                        self.eventpath + '031267' + '/' + '20200901' + 'event' + self.filename_extenstion,
+                        self.eventpath + folder + '/' + str(self.day) + 'event' + self.filename_extenstion,
                         encoding='gbk')
                     self.first_csv_switch = True
                 else:
