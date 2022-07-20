@@ -1,6 +1,6 @@
 # coding:utf-8
 import pandas as pd
-root = "D:/RX-105/wakeup/MyJuneAndEmbedding/"
+root = "D:/RX-105/wakeup/MyJuneAndEmbedding/8car/"
 datasetpath = "D:/RX-105/wakeup/MyJuneAndEmbedding/dataset/"
 datapath = 'D:/RX-105/wakeup/MyJuneAndEmbedding/data/'
 eventpath = "D:/RX-105/wakeup/MyJuneAndEmbedding/event/"

@@ -781,8 +781,6 @@ class EVENT:
                         '加加速度标准差': self.jstd,
                         '加加速度均值': self.jmea,
                         '加加速度首尾和': self.jhead,
-                        '速度变异系数': self.spdcv,
-                        '速度时变波动性': self.spdvf,
                         '事件类型': self.type
 
                     }

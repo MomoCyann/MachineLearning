@@ -66,7 +66,7 @@ def get_isolation(data_row, data, model):
     print(data_merge['异常标签2'].value_counts())
     return data_merge
 
-model_isof = IsolationForest(contamination=0.01, max_features=12,n_estimators=200)
+model_isof = IsolationForest(contamination=0.01, max_features=5,n_estimators=250, max_samples=125000, random_state=1)
 data_merge = get_isolation(data_row, data, model_isof)
 # model_isof_accel = IsolationForest(contamination=0.10, max_features=12,n_estimators=200)
 # model_isof_brake = IsolationForest(contamination=0.10, max_features=12,n_estimators=200)
@@ -136,15 +136,18 @@ def plot_embedding_3d(X, title=None):
 
 from time import time
 print("Computing t-SNE embedding")
-tsne = TSNE(n_components=3, init='pca', random_state=0)
-t0 = time()
-X_tsne = tsne.fit_transform(data)
+# tsne = TSNE(n_components=3, init='pca', random_state=0)
+# t0 = time()
+# X_tsne = tsne.fit_transform(data)
+
 # # # X_tsne_accel = tsne.fit_transform(data_accel)
 # # # X_tsne_brake = tsne.fit_transform(data_brake)
 # # # X_tsne_turn = tsne.fit_transform(data_turn)
 # # #plot_embedding_2d(X_tsne[:,0:2],"t-SNE 2D")
+
 # 3d图
 #plot_embedding_3d(X_tsne,"t-SNE 3D (time %.2fs)" %(time() - t0))
+
 # #plot_embedding_3d(X_tsne_accel,data_merge_accel,"t-SNE 3D (time %.2fs)" %(time() - t0))
 # #plot_embedding_3d(X_tsne_brake,data_merge_brake,"t-SNE 3D (time %.2fs)" %(time() - t0))
 # plot_embedding_3d(X_tsne_turn,data_merge_turn,"t-SNE 3D (time %.2fs)" %(time() - t0))

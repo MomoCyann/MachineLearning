@@ -77,7 +77,7 @@ data_turn = data_turn_row[['最大速度',
 #孤立森林
 from sklearn.ensemble import IsolationForest
 
-model_isof = IsolationForest(contamination=0.10, max_features=12,n_estimators=200)
+model_isof = IsolationForest(contamination=0.10, max_features=5,n_estimators=250, max_samples=125000, random_state=1)
 # model_isof_accel = IsolationForest(contamination=0.10, max_features=12,n_estimators=200)
 # model_isof_brake = IsolationForest(contamination=0.10, max_features=12,n_estimators=200)
 # model_isof_turn = IsolationForest(contamination=0.2, max_features=12,n_estimators=50)
